@@ -1,4 +1,13 @@
 function Visualizor()
+% Visualize a signals network
+%  Could read in an experiment definition and plot a 'node' for each variable and 
+%  connect them with lines annotated with their transfer function.  
+%  TODO start with row of input nodes at level 0 at the top of the figure (inputs,
+%  events, etc.) along with buttons for adding, deleting and connecting nodes.  
+%  Each new node is added below the last (iterate level).  Could simultaneously 
+%  write to expDef file.  Here signal Name would translate to variable name.
+%  TODO implement as class
+%  TODO option of adding real nodes at the same time as graphing them
 f = figure;
 net = gca();
 c = uicontextmenu(f);
