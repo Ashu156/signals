@@ -9,6 +9,8 @@ classdef FieldPanel < handle
     RowSpacing = 1
     ColSpacing = 3
     UI
+    ConditionTable
+    ContextMenu
   end
   
   properties (Access = protected)
@@ -21,13 +23,23 @@ classdef FieldPanel < handle
   
   methods
     function obj = FieldPanel(f,varargin)
-      obj.UI = uipanel('Parent', f, 'BorderType', 'none');
+      obj.UI = uipanel('Parent', f, 'BorderType', 'none',...
+          'BackgroundColor', 'white');
       obj.Listener = event.listener(obj.UI, 'SizeChanged', @obj.onResize);
+      c = uicontextmenu;
+      obj.UI.UIContextMenu = c;
+      % Create a child menu for the uicontextmenu
+      m = uimenu(c, 'Label','Make Coditional');
+%       obj.ConditionTable = uitable('Parent', obj.UI,...
+%         'FontName', 'Consolas',...
+%         'RowName', [],...
+%         'CellEditCallback', @obj.cellEditCallback,...
+%         'CellSelectionCallback', @obj.cellSelectionCallback);
     end
 
     function [label, ctrl] = addField(obj, name, ctrl)
       label = uicontrol('Parent', obj.UI, 'Style', 'text', 'String', name,...
-        'HorizontalAlignment', 'left');
+        'HorizontalAlignment', 'left', 'BackgroundColor', 'white');
       callback = @(~,~)onEdit(obj, name);
       if nargin < 3
         ctrl = uicontrol('Parent', obj.UI, 'Style', 'edit', 'HorizontalAlignment', 'left');
@@ -54,7 +66,8 @@ classdef FieldPanel < handle
         obj.MinRowHeight = l.Extent(4);
         delete(l);
       end
-      %% general coordinates
+      
+      %%% general coordinates
       pos = getpixelposition(obj.UI);
       borderwidth = obj.Margin;
       bounds = [pos(3) pos(4)] - 2*borderwidth;
@@ -70,13 +83,15 @@ classdef FieldPanel < handle
       ctrlWidthAvail = bounds(1)/ncols - labelColWidth;
       ctrlColWidth = max(obj.MinCtrlWidth, min(ctrlWidthAvail, obj.MaxCtrlWidth));
       fullColWidth = labelColWidth + ctrlColWidth;
-      %% coordinates of labels
+      
+      %%% coordinates of labels
       by = bounds(2) - rows*rowHeight + vspace + 1 + borderwidth;
       labelPos = [vspace + (cols - 1)*fullColWidth + 1 + borderwidth...
         by...
         obj.LabelWidths...
         repmat(rowHeight - 2*vspace, n, 1)];
-      %% coordinates of edits
+    
+      %%% coordinates of edits
       editPos = [labelColWidth + hspace + (cols - 1)*fullColWidth + 1 + borderwidth ...
         by...
         repmat(ctrlColWidth - 2*hspace, n, 1)...
