@@ -24,25 +24,30 @@ classdef FieldPanel < handle
   methods
     function obj = FieldPanel(f,varargin)
       obj.UI = uipanel('Parent', f, 'BorderType', 'none',...
-          'BackgroundColor', 'white');
+          'BackgroundColor', 'white', 'Position', [0 0 0.5 1]);
+      obj.UI(2) = uipanel('Parent', f, 'BorderType', 'none',...
+          'BackgroundColor', 'black', 'Position',  [0.5 0 0.5 1]);
       obj.Listener = event.listener(obj.UI, 'SizeChanged', @obj.onResize);
       c = uicontextmenu;
-      obj.UI.UIContextMenu = c;
+      [obj.UI.UIContextMenu] = deal(c);
       % Create a child menu for the uicontextmenu
-      m = uimenu(c, 'Label','Make Coditional');
-%       obj.ConditionTable = uitable('Parent', obj.UI,...
-%         'FontName', 'Consolas',...
-%         'RowName', [],...
-%         'CellEditCallback', @obj.cellEditCallback,...
-%         'CellSelectionCallback', @obj.cellSelectionCallback);
+      obj.ContextMenu = uimenu(c, 'Label','Make Coditional');
+      obj.ConditionTable = uitable('Parent', obj.UI(2),...
+        'FontName', 'Consolas',...
+        'RowName', [],...
+        'RearrangeableColumns', true,...
+        'Units', 'normalized',...
+        'Position',[0 0 1 1],...
+        'CellEditCallback', @nop,...%@obj.cellEditCallback,...
+        'CellSelectionCallback', @nop);%@obj.cellSelectionCallback);
     end
 
     function [label, ctrl] = addField(obj, name, ctrl)
-      label = uicontrol('Parent', obj.UI, 'Style', 'text', 'String', name,...
+      label = uicontrol('Parent', obj.UI(1), 'Style', 'text', 'String', name,...
         'HorizontalAlignment', 'left', 'BackgroundColor', 'white');
       callback = @(~,~)onEdit(obj, name);
       if nargin < 3
-        ctrl = uicontrol('Parent', obj.UI, 'Style', 'edit', 'HorizontalAlignment', 'left');
+        ctrl = uicontrol('Parent', obj.UI(1), 'Style', 'edit', 'HorizontalAlignment', 'left');
       end
       set(ctrl, 'Callback', callback);
       obj.Labels = [obj.Labels; label];
@@ -56,19 +61,27 @@ classdef FieldPanel < handle
     
     function onEdit(obj, id)
       disp(id);
+      changed = strcmp(id{:},[obj.Labels.String]);
+      obj.Labels(changed).ForegroundColor = [1 0 0];
     end
     
     function onResize(obj, ~, ~)
       if isempty(obj.LabelWidths)
         ext = reshape([obj.Labels.Extent], 4, [])';
         obj.LabelWidths = ext(:,3);
-        l = uicontrol('Parent', obj.UI, 'Style', 'edit', 'String', 'something');
+        l = uicontrol('Parent', obj.UI(1), 'Style', 'edit', 'String', 'something');
         obj.MinRowHeight = l.Extent(4);
         delete(l);
       end
       
+      %%% resize condition table
+      w = numel(obj.ConditionTable.ColumnName);
+      if w > 5; w = 0.5; else; w = 0.1 * w; end
+      obj.UI(2).Position = [1-w 0 w 1];
+      obj.UI(1).Position = [0 0 1-w 1];
+      
       %%% general coordinates
-      pos = getpixelposition(obj.UI);
+      pos = getpixelposition(obj.UI(1));
       borderwidth = obj.Margin;
       bounds = [pos(3) pos(4)] - 2*borderwidth;
       n = numel(obj.Labels);
