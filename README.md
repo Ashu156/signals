@@ -1,6 +1,7 @@
 # *signals*
 
-Simple, elegant and flexible stimulus presentation in MATLAB. Signals was built for neuroscientists to gain hitherto unprecedented, real-time control over multiple aspects of their bevhaioural experiments. 
+*Signals* is software for neuroscientists to create and run simple, elegant and flexible stimulus presentation for neurophysiology experiments. Principally, *signals* allows for monitoring and 
+manipulating stimuli (and other experimental parameters) over time. This is done by representing each parameter of interest as a signal!
 
 Wouldn't it be nice if you could describe the presentation of stimuli in your experiment with simple, concise code? i.e.
 
