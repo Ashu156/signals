@@ -2,18 +2,11 @@ function expTestPanel(expdef)
 %UNTITLED Summary of this function goes here
 %   Input: Handle to experiment definition function
 
-%% Questions:
+%% Questions/TODO:
 
-% - why have defFunction as parameter field?
-% - why construct ExpRef parameter (as opposed to any other)?
-%     - avoiding redundant cases of this construction?
-% - if isempty(defFunction), set it to file name? (like in MC)
-% - remove default paths to zserver?
-
-% - new layer values?
-% - setElements?
 % - vc, vcc?
 % - VBL syncing and DWM compositor issues?
+% - get screen resolution right for PTB 'Screen'
 
 
 % setExpDefPanel;
@@ -45,9 +38,9 @@ end
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,... 
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,... 
       hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,... 
-      signalsFig, expStarted] = setExpr; %local function
+      signalsFig, expStarted] = setExp; %local function
 
-%% main local functions (setExpDefPanel, setPars, setExpr)
+%% main local functions (setExpDefPanel, setPars, setExp)
 
   function [parsFig, mainbox, ctrlgrid, applyParsBtn, startExpBtn, reRunExpBtn,... 
   runAnotherExpBtn, trialNumCount, rewardCount, wheelslider] = setExpDefPanel
@@ -124,7 +117,7 @@ end
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,... 
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,... 
       hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,... 
-      signalsFig, expStarted] = setExpr
+      signalsFig, expStarted] = setExp
     % set up parameter editor in panel
     parsEditor = eui.ParamEditor(exp.Parameters(parsStruct), mainbox);
     
@@ -139,7 +132,13 @@ end
     % PTB Screen Args: (open, monitor, color, position=[L,T,R,B], pixelSz)
     % *note: position is different than MATLAB default: [L,B,R,T]
     Screen('CloseAll') % close any other open screens
-    [vc, rect] = Screen('OpenWindow', 1, 40, [1,40,840,601], 32);
+    gInfo = groot;
+    numMonitors = size(gInfo.MonitorPositions, 1);
+    if numMonitors > 1
+      [vc, rect] = Screen('OpenWindow', 1, 40, [1,40,840,601], 32);
+    else
+      [vc, rect] = Screen('OpenWindow', 0, 40, [1,40,840,601], 32);
+    end
     Screen('FillRect', vc, 255/2);
     Screen('Flip', vc);
     
@@ -396,7 +395,7 @@ disp('Mouse cursor as wheel input emulator has been set')
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
       hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-      signalsFig, expStarted] = setExpr;
+      signalsFig, expStarted] = setExp;
   end
 
   function runXExpDef(~,~)
@@ -414,7 +413,7 @@ disp('Mouse cursor as wheel input emulator has been set')
 %           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
 %           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
 %           hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-%           signalsFig, expStarted] = setExpr;
+%           signalsFig, expStarted] = setExp;
 %         
 %       case 'Select A Different Exp Def'
         delete(mainboxChldrn(1)); %delete parameter editor before loading a different
@@ -425,7 +424,7 @@ disp('Mouse cursor as wheel input emulator has been set')
           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
           hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-          signalsFig, expStarted] = setExpr;
+          signalsFig, expStarted] = setExp;
   end
 
  function wheelSliderChanged(src, ~)
