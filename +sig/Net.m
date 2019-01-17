@@ -1,10 +1,10 @@
 classdef Net < handle
-  %sig.Net A network that can contain sig.node.Node's.
+  %sig.Net: A network that can contain sig.node.Node's.
   %   A network that contains and manages sig.node.Node's.
   
   properties (Transient)
     % A structure holding node ids, the values they should take and the
-    % delay before they are applied.  Used for delayed posting of values.
+    % delay before they are applied. Used for delayed posting of values.
     Schedule
     Listeners
   end
@@ -18,6 +18,9 @@ classdef Net < handle
   end
   
   methods
+    
+    % Constructor method for 'Net', with default 'size' of 4000 nodes, and
+    % default 'Schedule' structure with empty cell arrays.
     function this = Net(size)
       if nargin < 1
         size = 4000;
