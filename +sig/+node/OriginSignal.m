@@ -1,6 +1,9 @@
 classdef OriginSignal < sig.node.Signal
-  % sig.node.OriginSignal Summary of this class goes here
-  %   Detailed explanation goes here
+  % sig.node.OriginSignal: signal class upon which all other signals depend
+  %   Origin signals are the input nodes to the running reactive network
+  %   during a *signals* experiment. They serve as signals which
+  %   all other signals are dependent on, and can be created in the
+  %   reactive network. They are updated directly via the 'post' method.
   
   properties (SetAccess = private, Transient)
     ActiveTimers
