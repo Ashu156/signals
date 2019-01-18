@@ -1,6 +1,6 @@
 %% Signals Test Script
 % Every signal is part of a network, managed through a 'sig.Net' object.
-% The network object holds all the ids of every signals node
+% The network object holds all the id of every signals node
 
 % Every signal has an underlying node, a sig.node.Node object that contains
 % a number of important properties:
@@ -34,7 +34,6 @@ net = sig.Net; % Create a new signals network
 originSignal = net.origin('input'); % Create an origin signal
 sig2 = originSignal.scan(@plus, 1);
 sig2.Node.CurrValue
-sig2.Node.WorkingValue
 post(originSignal, 4)
 
 %% Demonstration on sig.Signal/output() method
@@ -116,13 +115,19 @@ pause(1)% ...
 delete(tmr); clear tmr frequency t0 time
 
 %% Timing 2 - Scheduling
-% The net object contains an attribute called Schedule which 
+% For signals derived from the 'delay' method, the propergation of values
+% occurs via the sig.Net rubSchedule method. The net object contains an
+% attribute called Schedule which contains a list of node ids and their due
+% time.  Each time runSchedule is called, the method finds all nodes that
+% are overdue and posts the current values of their inputs into the
+% signals.  Thus, the accuracy of your delayed posts are dependent of the
+% frequency of runSchedule being called.
 
 net = sig.Net; % Create network
-frequency = 10e-2; 
+frequency = 10e-2; % Run schedule every 10 ms
 tmr = timer('TimerFcn', @(~,~)net.runSchedule,...
     'ExecutionMode', 'fixedrate', 'Period', frequency);
-start(tmr) % Run schedule every 10 ms
+start(tmr)
 s = net.origin('input'); % Input signal
 delayedSig = s.delay(5); % New signal delayed by 5 sec
 h = output(delayedSig); % Let's output its value
