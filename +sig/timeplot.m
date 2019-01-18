@@ -5,6 +5,8 @@ function listeners = timeplot(varargin)
 %   TODO Deal with logging signals & registries & subscriptable signals
 %   TODO Deal with strings, arrays, structures, cell arrays
 %sigs, figh, mode, tWin
+
+% set figure handle, 'figh', for plotting
 [present, value, idx] = namedArg(varargin, 'parent');
 if present
   figh = value;
@@ -12,6 +14,8 @@ if present
 else
   figh = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w');
 end
+
+% set the plotting mode, 'mode'
 [present, value, idx] = namedArg(varargin, 'mode');
 if present
   mode = value;
@@ -20,6 +24,7 @@ else
   mode = 0;
 end
 
+% set the length of time to be displayed for the plotted signals, 'tWin'
 [present, value, idx] = namedArg(varargin, 'tWin');
 if present
   tWin = value;
@@ -30,8 +35,10 @@ end
 
 clf(figh);
 
+% create a structure which will contain the signals to be plotted
 sigs = StructRef;
 
+% for all our signals, get their names and values
 for i = 1:length(varargin)
   s = varargin{i};
   name = genvarname(s.Name);
@@ -50,28 +57,32 @@ for i = 1:length(varargin)
       error('Unrecognized type')
   end
 end
-names = fieldnames(sigs);
-names{1} = 'Time Signal';
-n = numel(names);
-tstart = [];
-lastval = cell(n,1);
 
-cmap = colormap(figh, 'hsv');
+names = fieldnames(sigs);
+names{1} = 'Time Signal'; % append 'Time Signal' to our cell array of signal names
+n = numel(names); % number of signals, including 'time signal'
+tstart = [];
+lastval = cell(n,1); % 'lastval' will hold all signals' preceding values before their next update 
+
+cmap = colormap(figh, 'hsv'); % create a colormap for plotting
 skipsInCmap = length(cmap) / n;
 cmap = cmap(1:skipsInCmap:end, :);
 
 args = {'linewidth' 2};
 
-axh = zeros(n,1);
-x_t = cell(n,1);
+axh = zeros(n,1); % axes handles for the signal plots
+x_t = cell(n,1); % 'x_t' will hold time-mapped signals to be plotted (instead of the actual signals)
 fontsz = 9;
 
 if numel(mode) == 1
-  mode = repmat(mode, n, 1);
+  mode = repmat(mode, n, 1); % allow changing plot mode for each signal individually 
 end
 
-signals = struct2cell(sigs);
+signals = struct2cell(sigs); % convert to a cell array for plotting
 
+% can all of the following for loops be condensed into a single loop?
+
+% create and prettify the subtightplots for all signals
 for i = 1:n
   axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
@@ -94,14 +105,18 @@ for ii = 1:n
   end
 end
 
-for i = 1:n % add listeners to the signals that will update the plots
+% add listeners to the signals that will update the plots
+for i = 1:n 
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end
 
 %set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
-set(axh, 'Xlim', [0 1]);
+set(axh, 'Xlim', [0 tWin]);
+
+% 'cycleMode' is a callback which changes plotting mode of signals
 set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
 
+% 'new' does the actual plotting of the new values of the signals upon update
   function new(idx, value)
     value.x = iff(ischar(value.x), true, value.x);
     if isempty(tstart)
