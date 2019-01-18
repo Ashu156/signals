@@ -28,7 +28,7 @@
 %
 % In this tutorial you will get started with *signals*. You will 1) create 
 % signals within a *signals* network; 2) use common arithmetic and
-% signals-specific functions to manipulate signals; 3) plot signals to 
+% signals-specific functions to manipulate signals; 3) live plot signals to 
 % visualise their changes over time; 4) create simple visual stimuli using
 % signals. 
 %
@@ -132,8 +132,8 @@ os1.post([1 2 3]); % '[6 7 8]' will be displayed
 clear dsScanOut
 
 % 'delay': 'ds = s1.delay(n)' returns a dependent signal 'ds' which takes
-% as value the value of 's1' after a delay of 'n' seconds AND after
-% SIG.NET.RUNSCHEDULE has been run, whenever 's1' updates.
+% as value the value of 's1' after a delay of 'n' seconds, whenever 's1' 
+% updates.
 dsDelay = os1.delay(2); dsDelayOut = output(dsDelay);
 % **sig.Net.runSchedule** is a method that checks for and applies
 % updates to signals that are to be updated after a delay.
@@ -171,7 +171,102 @@ clear dsDelayOut
 %      e) use 'output' to create the variables that will display the
 % signals' values. --
 
+% Once you've finished 4), run the following block of code, which will
+% execute 5 loops (i.e. 5 trials) of your experiment (and note how we only
+% explicitly update 'expStart' and 'newTrial' here, because all other
+% signals are dependent on these two origin signals):
+n = 0;
+while n < 5
+  if n == 0
+    expStart.post('Start Experiment'); % start of experiment
+    pause(2);
+  end
+  newTrial.post(1) % start of new trial (displays output of 'newTrial',
+  % 'trialNum', 'trialNumFunc', 'trialRunning', 'dispTrialStr')
+  pause(3); % 3 seconds from new trial to end trial
+  net.runSchedule; % displays output of 'endTrial', 'trialRunning'
+  disp('Trial has Ended');
+  pause(1); % pause 1 second betweeen end trial and next new trial
+  n = n+1; % trial counter
+end
+disp('End Experiment');
+
 %% Plot signals and visualise their changes over time
+
+% Live-plotting signals is useful to visualise how aspects of your
+% experiment are changing over time. When running a *signals* experiment in
+% Rigbox, this plotting is done for you via **sig.timeplot**. In the
+% following block of code, we will take key aspects of **sig.timeplot** to
+% implement live-plotting of the signals we've created in 4).
+
+% Let's clear our current workspace and re-create our signals from 4)
+clear all %#ok<CLALL>
+net = sig.Net;
+expStart = net.origin('expStart');
+newTrial = net.origin('newTrial');
+endTrial = newTrial.delay(3)+1;
+trialNum = newTrial.scan(@plus, 0);
+trialNumFunc = trialNum.map(@(x) x.^3-1);
+trialRunning = to(newTrial, endTrial);
+trialStr = net.origin('trialStr'); trialStr.post('Trial is Running');
+dispTrialStr = trialStr.at(trialRunning);
+
+sigs = StructRef; % Like MATLAB's 'struct', but for signals
+% Let's put all our signals from 4) into this **StructRef**
+sigs.expStart = expStart; 
+sigs.newTrial = newTrial; 
+sigs.endTrial = endTrial;
+sigs.trialNum = trialNum; 
+sigs.trialNumFunc = trialNumFunc; 
+sigs.trialRunning = trialRunning;
+sigsCell = struct2cell(sigs); % convert to a cell array for plotting
+names = fieldnames(sigs); % names of signals 
+n = numel(sigsCell); % number of signals
+
+% create our figure and subplots
+sigsFig = figure('Name', 'LivePlotExample', 'NumberTitle', 'off'); 
+axh = zeros(n,1); % our axes handles for our signal plots
+lastVals = cell(n,1); lastVals(:) = {0}; % the last values for all our signals, initialized to 0
+
+% create a colormap to plot our signals
+cmap = colormap(sigsFig, 'hsv');
+skipsInCmap = length(cmap) / n;
+cmap = cmap(1:skipsInCmap:end, :);
+
+loopNum = net.origin('loopNum'); % initialize loop number signal
+loopNum.post(1);
+
+% for each signal: create an axis handle, prettify, and add a listener that
+% will do the actually plotting of updates
+for i = 1:n
+  axh(i) = subplot(6,1,i, 'parent', sigsFig);
+  hold(axh(i), 'on');
+  %x_t{i} = signals{i}.map(...
+    %@(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
+  curTitle = title(axh(i), names{i}, 'interpreter', 'none');
+  listeners(i,1) = onValue(sigsCell{i}, @(val)... % when a signal updates, plot it
+    stairs(axh(i), [loopNum.Node.CurrValue-1 loopNum.Node.CurrValue], [lastVals{i}, val],...
+    'Color', cmap(i,:), 'Marker', 'o', 'MarkerFaceColor', cmap(i,:)));
+end
+set(axh, 'XLim', [0 5]);
+
+% Let's run our experiment again
+n = 0;
+while n < 5
+  if n == 0
+    expStart.post(1); % start of experiment
+    pause(2);
+  end
+  newTrial.post(1) % start of new trial (displays output of 'newTrial',
+  % 'trialNum', 'trialNumFunc', 'trialRunning', 'dispTrialStr')
+  pause(3); % 3 seconds from new trial to end trial
+  net.runSchedule; % displays output of 'endTrial', 'trialRunning'
+  pause(1); % pause 1 second betweeen end trial and next new trial
+  lastVals = sigsCell; % save current vals as 'lastVals' for next trial
+  loopNum.post(loopNum.Node.CurrValue+1);
+  n = n+1; % trial counter
+end
+disp('End Experiment');
 
 %% Create simple visual stimuli using signals
 

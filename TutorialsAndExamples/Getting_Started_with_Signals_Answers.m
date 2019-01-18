@@ -15,20 +15,28 @@ dsStrOut = dsStr.output;
 os4.post('Hello, *signals*');
 
 % 4) 
+
 % a)
 expStart = net.origin('expStart');
 newTrial = net.origin('newTrial');
+
 % b)
 endTrial = newTrial.delay(3)+1;
+
 % c)
 trialNum = newTrial.scan(@plus, 0);
 trialNumFunc = trialNum.map(@(x) x.^3-1);
 % in this case, you could also create 'trialNumFunc' without using 'map':
 % trialNumFunc = trialNum.^3-1;
+
 % d)
 trialRunning = to(newTrial, endTrial);
 trialStr = net.origin('trialStr'); trialStr.post('Trial is Running');
 dispTrialStr = trialStr.at(trialRunning);
+% in this case, we could also combine multiple method calls togethers, and
+% create 'dispTrialStr' without needing to explicitly create 'trialRunning':
+% dispTrialStr - trialStr.at.to(newTrial, endTrial);
+
 % e)
 expStartOut = expStart.output;
 newTrialOut = newTrial.output;
@@ -37,22 +45,3 @@ trialNumOut = trialNum.output;
 trialNumFuncOut = trialNumFunc.output;
 trialRunningOut = trialRunning.output;
 dispTrialStrOut = dispTrialStr.output;
-
-% The code above creates the appropriate signals. The code below displays
-% the output for 5 trials
-
-n = 0;
-while n < 5
-  if n == 0
-    expStart.post('Start Experiment'); % start of experiment
-    pause(2);
-  end
-  newTrial.post(1) % start of new trial (displays output of 'newTrial',
-  % 'trialNum', 'trialNumFunc', 'trialRunning', 'dispTrialStr')
-  pause(3); % 3 seconds from new trial to end trial
-  net.runSchedule; % displays output of 'endTrial', 'trialRunning'
-  disp('Trial has Ended');
-  pause(1); % pause 1 second betweeen end trial and next new trial
-  n = n+1; % trial counter
-end
-disp('End Experiment');
