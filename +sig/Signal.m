@@ -28,7 +28,7 @@ classdef Signal < handle
     %   dispValLong = os1.onValue(@(x)... 
     %     fprintf('The value of this signal is %d\n',x));
     %   os1.post(5);
-    
+
     h = onValue(this, fun)
     
     % 'th = s1.output' returns a TidyHandle object 'th' which displays the
@@ -146,15 +146,15 @@ classdef Signal < handle
 
     s = scan(this, f, seed)
     
-    % 'ds = s1.selectFrom(s2...sN)' returns a dependent signal 'ds' which,
-    % whenever 's1' takes an integer value, takes a value based on 1 of 3
-    % cases. Case 1: When 's1 >= 1 && s1 <= N', 'ds' takes the value of the 
-    % input argument signal (in the input argument list) indexed with the 
-    % value of 's1.' Case 2: When 's1 == 0', 'ds = 0'. Case 3: When 
-    % 's1 > N', 'ds' is not updated.
+    % 'ds = idx.selectFrom(option1...optionN)' returns a dependent signal
+    % 'ds' which, whenever 'idx' takes an integer value, takes a value based
+    % on 1 of 3 cases. Case 1: When 'idx >= 1 && idx <= N', 'ds' takes the
+    % value of the input argument signal (in the input argument list)
+    % indexed with the value of 'idx.' Case 2: When 'idx == 0', 'ds = 0'.
+    % Case 3: When 'idx > N', 'ds' is not updated.
     % 
     % Example: 
-    %   ds8 = os1.selectFrom(os2, os3);
+    %   ds8 = idx.selectFrom(os2, os3);
     %   ds8Out = output(ds8);
     %   os2.post(2); os3.post(3);
     %   os1.post(1); % '2' will be displayed

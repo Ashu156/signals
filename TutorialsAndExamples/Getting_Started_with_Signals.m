@@ -27,7 +27,7 @@
 % from origin signals).
 %
 % In this tutorial you will get started with *signals*. You will 1) create 
-% signals within a *signals* network; 2) use common artihmetic and
+% signals within a *signals* network; 2) use common arithmetic and
 % signals-specific functions to manipulate signals; 3) plot signals to 
 % visualise their changes over time; 4) create simple visual stimuli using
 % signals. 
