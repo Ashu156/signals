@@ -147,14 +147,14 @@ classdef Signal < handle
     s = scan(this, f, seed)
     
     % 'ds = idx.selectFrom(option1...optionN)' returns a dependent signal
-    % 'ds' which, whenever 'idx' takes an integer value, takes a value based
-    % on 1 of 3 cases. Case 1: When 'idx >= 1 && idx <= N', 'ds' takes the
-    % value of the input argument signal (in the input argument list)
-    % indexed with the value of 'idx.' Case 2: When 'idx == 0', 'ds = 0'.
-    % Case 3: When 'idx > N', 'ds' is not updated.
+    % 'ds' which, whenever the signal 'idx' takes an integer value, takes
+    % a value based on 1 of 3 cases. Case 1: When 'idx >= 1 && idx <= N', 
+    % 'ds' takes the value of the input argument signal (in the input 
+    % argument list) indexed with the value of 'idx.' Case 2: When 
+    % 'idx == 0', 'ds = 0'. Case 3: When 'idx > N', 'ds' is not updated.
     % 
     % Example: 
-    %   ds8 = idx.selectFrom(os2, os3);
+    %   ds8 = os1.selectFrom(os2, os3);
     %   ds8Out = output(ds8);
     %   os2.post(2); os3.post(3);
     %   os1.post(1); % '2' will be displayed

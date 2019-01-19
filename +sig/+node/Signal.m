@@ -4,7 +4,8 @@ classdef Signal < sig.Signal & handle
   %   This class creates concrete functions for the abstract, 
   %   signals-specific methods of SIG.SIGNAL. 
   %
-  % See also SIG.SIGNAL
+  % For examples and more detailed explanations of these methods, see also
+  % SIG.SIGNAL
   
   properties (Dependent)
     Name
@@ -35,6 +36,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function s = subscriptable(this)
+      % New signal carrying caller signal via dot notation
       node = sig.node.Node(this.Node, 'sig.transfer.identity');
       s = sig.node.SubscriptableSignal(node);
       node.FormatSpec = this.Node.FormatSpec;
@@ -42,24 +44,31 @@ classdef Signal < sig.Signal & handle
     end
     
     function y = end(this, k, n)
+      % todo: document
       warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this));
       y = expr.End(k, n);
     end
     
     function s = at(what, when)
+      % New signal carrying 'what' when 'when' updates
       s = applyTransferFun(what, when, 'sig.transfer.at', [], '%s.at(%s)');
     end
     
     function s = then(when, what)
+      % New signal carrying 'what' when 'when' updates
+      % (equivalent to 'at' with the caller signal and input signal
+      % switching positions)
       s = applyTransferFun(what, when, 'sig.transfer.at', [], '%s.then(%s)');
       s.Node.DisplayInputs = fliplr(s.Node.DisplayInputs);
     end
     
     function f = keepWhen(what, when)
+      % New signal carrying 'what' when 'what' updates AND 'when' holds a truthy value
       f = applyTransferFun(what, when, 'sig.transfer.keepWhen', [], '%s.keepWhen(%s)');
     end
     
     function m = map(this, f, varargin)
+      % New signal carrying the mapping of function 'f' onto 'this'
       if numel(varargin) > 0
         formatSpec = varargin{1};
       else
@@ -72,11 +81,12 @@ classdef Signal < sig.Signal & handle
     end
     
     function m = map2(sig1, sig2, f, varargin)
+      % New signal carrying the mapping of function 'f' onto 's1' AND 's2'
       m = mapn(sig1, sig2, f, varargin{:});
     end
     
     function m = mapn(varargin)
-      % destructure varargin
+      % New signal carrying the mapping of function 'f' onto an arbitrary number of signals
       if isa(varargin{end}, 'function_handle')
         [sigs{1:nargin-1}, f] = varargin{:};
         formatSpec = sprintf(['mapn(' repmat('%%s, ', 1, numel(sigs)) '%s)'], toStr(f));
@@ -87,7 +97,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function sc = scan(varargin)
-      % applies an accumulator function to a signal's elements
+      % New signal carrying an accumulator function applied to an input signal's elements
       parsidx = find(cellfun(@(a)ischar(a) && strcmpi(a, 'pars'), varargin));
       if ~isempty(parsidx)
         pars = varargin(parsidx+1:end);
@@ -145,6 +155,8 @@ classdef Signal < sig.Signal & handle
 %     end
 
     function r = iff(pred, trueVal, falseVal)
+      % New signal carrying 'trueVal' if 'pred' evaluates to true, else carrying 'falseVal'
+      % (similar to a MATLAB if-then-else statement)
       if nargin > 2
         r = cond(pred, trueVal, true, falseVal);
       else
@@ -153,6 +165,7 @@ classdef Signal < sig.Signal & handle
     end
 
     function c = cond(pred1, value1, varargin)
+      % New signal carrying the first 'value' that matches a true 'pred' in an input list of 'pred,value' pairs
       preds = [{pred1} varargin(1:2:end)];
       vals = [{value1} varargin(2:2:end)];
       
@@ -170,25 +183,28 @@ classdef Signal < sig.Signal & handle
     end
     
     function s = selectFrom(this, varargin)
+      % New signal carrying one of a list of input signals, indexed by 'this'
       formatSpec = [...
         '%s.selectFrom([ ' strJoin(repmat({'%s'}, numel(varargin), 1), ' ; ') ' ])'];
       s = applyTransferFun(this, varargin{:}, 'sig.transfer.selectFrom', [], formatSpec);
     end
     
     function f = indexOfFirst(varargin)
+      % New signal carrying the value of the first truthy input signal
       formatSpec = [...
         'indexOfFirst([ ' strJoin(repmat({'%s'}, nargin, 1), ' ; ') ' ])'];
       f = applyTransferFun(varargin{:}, 'sig.transfer.indexOfFirst', [], formatSpec);
     end
     
     function b = bufferUpTo(this, nSamples)
-      
+      % New signal carrying the last 'nSamples' 'this' took
       % todo: implement as a transfer function
       b = scan(this, sig.scan.buffering(nSamples), []);
       b.Node.FormatSpec = sprintf('%%s.bufferUpTo(%i)', nSamples);
     end
     
     function b = buffer(this, nSamples)
+      % New signal carrying the last 'nSamples' (or less) 'this' took
       buffupto = bufferUpTo(this, nSamples);
       nelem = size(buffupto, 2);
       b = buffupto.keepWhen(nelem == nSamples);
@@ -225,16 +241,19 @@ classdef Signal < sig.Signal & handle
 %     end
 
     function m = merge(varargin)
+      % New signal carrying the input signal (from a list of signals) most recently updated
       formatSpec = ['( ' strJoin(repmat({'%s'}, 1, nargin), ' ~ ') ' )'];      
       m = applyTransferFun(varargin{:}, 'sig.transfer.merge', [], formatSpec);
     end
     
     function p = to(a, b)
+      % New signal carrying '1' when 'a' is truthy, and '0' when 'b' is truthy
       p = applyTransferFun(a, b, 'sig.transfer.latch', [], '%s.to(%s)');
       p.Node.CurrValue = false;
     end
     
     function tr = setTrigger(set, release)
+      % New signal carrying '1' after 'set', then 'release' take truthy values
       armed = set.to(release);
       tr = at(true, ~armed); % samples true each time armed goes to false
       tr.Node.FormatSpec = '%s.setTrigger(%s)';
@@ -242,21 +261,25 @@ classdef Signal < sig.Signal & handle
     end
     
     function nr = skipRepeats(this)
+      % New signal carrying 'this' when 'this' updates to a value different than its last
       nr = applyTransferFun(this, 'sig.transfer.skipRepeats', [],  '(*%s)');
     end
     
     function l = lag(this, n)
+      % New signal carrying 'this' 'n+1' updates prior
       b = buffer(this, n + 1);
       l = b.map(@(v)v(1), sprintf('%%s.lag(%s)', n));
     end
     
     function d = delta(this)
+      % New signal carrying the difference between the current and previous 'this'
       d = map(buffer(this, 2), @diff);
       d.Node.DisplayInputs = this.Node;
       d.Node.FormatSpec = [char(916) '%s']; % char(916) is the delta character
     end
     
     function d = delay(this, period)
+      % New signal carrying 'this' 'period' seconds after 'this' updates
 
       % The scheduler creates a cell 'packet' with the new value to be
       % delayed and the current delay value.
@@ -276,6 +299,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function id = identity(this)
+      % New signal carrying 'this'
       id = applyTransferFun(this, 'sig.transfer.identity', [], this.Node.FormatSpec);
       % the identity function should display exactly as this one does, i.e.
       % look like it has the same inputs, use the same format spec
@@ -297,6 +321,7 @@ classdef Signal < sig.Signal & handle
     end
 
     function fs = flatten(this)
+      % todo: document
       % all done in mexnet according to the transfer opcode
       state = StructRef;
       state.unappliedInputChanges = false;
@@ -333,7 +358,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function l = log(this, clockFun)
-      % Creates signals that logs the values and timestamps of input signal
+      % New signal that logs the values and timestamps when 'this' updates
       %
       % Sometimes you want the values of a signal to be logged and
       % timestamped. The log method returns a signal that carries a
@@ -353,6 +378,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function h = onValue(this, fun)
+      % New TidyHandle that executes a callback, 'fun', when 'this' updates
       callbackidx = this.NextCallbackId + 1;
       this.NextCallbackId = callbackidx;
       this.OnValueCallbacks(callbackidx) = fun;
@@ -371,10 +397,12 @@ classdef Signal < sig.Signal & handle
     end
     
     function h = output(this)
+      % New TidyHandle that displays 'this'
       h = onValue(this, @disp);
     end
     
     function s = size(x, dim)
+      % New signal carrying the length of 'x' across dimension 'dim'
       if nargin > 1
         s = map2(x, dim, @size);
       else
@@ -404,10 +432,12 @@ classdef Signal < sig.Signal & handle
     end
     
     function h = into(from, to)
+      % New TidyHandle that posts 'from' into 'to'
       h = onValue(from, @(v)post(to, v));
     end
 
     function valueChanged(this, newValue)
+      % Executes the callbacks for 'this' when 'this' updates
       callbacks = this.OnValueCallbacks.values();
       n = numel(callbacks);
       for ii = 1:n
@@ -416,6 +446,8 @@ classdef Signal < sig.Signal & handle
     end
     
     function n = node(this)
+      % New Node carrying the Node from 'this'
+      % ('n' holds the same reference as this.Node - 'n' is not just an alias)
       n = this.Node;
     end
   end
