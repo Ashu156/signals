@@ -1,5 +1,5 @@
 classdef Signal < handle
-  % SIG.SIGNAL: A class defining *signals* objects' interactions.
+  % SIG.SIGNAL: A class defining operations on signals.
   %   This class contains the methods that define how a *signals* object
   %   can be manipulated. The abstract methods are mostly commonly used
   %   functional programming functions. The concrete methods are mostly 
@@ -346,82 +346,100 @@ classdef Signal < handle
   
   methods
     function b = floor(a)
+      % New signal carrying the input signal rounded down to the nearest
+      % less than or equal to integer
       b = map(a, @floor, 'floor(%s)');
     end
     
     function a = abs(x)
+      % New signal carrying the absolute value of the input signal
       a = map(x, @abs, '|%s|');
     end
     
     function a = sign(x)
+      % New signal carrying the sign function of the input signal
       a = map(x, @sign, 'sgn(%s)');
     end
     
     function c = sin(a)
+      % New signal carrying the sine function of the input signal
       c = map(a, @sin, 'sin(%s)');
     end
     
     function c = cos(a)
+      % New signal carrying the cosine function of the input signal
       c = map(a, @cos, 'cos(%s)');
     end
     
     function c = uminus(a)
+      % New signal carrying the negation of the input signal
       c = map(a, @uminus, '-%s');
     end
     
     function c = not(a)
+      % New signal carrying the logical NOT of the input signal
       c = map(a, @not, '~%s');
     end
     
     function c = plus(a, b)
+      % New signal carrying the addition between signals
       c = map2(a, b, @plus, '(%s + %s)');
     end
     
     function c = minus(a, b)
+      % New signal carrying the subtraction between signals
       c = map2(a, b, @minus, '(%s - %s)');
     end
     
-    function c = mtimes(a, b)
-      c = map2(a, b, @mtimes, '%s*%s');
-    end
-    
     function c = times(a, b)
+      % New signal carrying the multiplication between signals
       c = map2(a, b, @times, '%s.*%s');
     end
     
+    function c = mtimes(a, b)
+      % New signal carrying the matrix multiplication between signals
+      c = map2(a, b, @mtimes, '%s*%s');
+    end
+    
     function c = mrdivide(a, b)
+      % New signal carrying the right-matrix division between signals
       c = map2(a, b, @mrdivide, '%s/%s');
     end
     
     function c = rdivide(a, b)
+      % New signal carrying the right-array division between signals
       c = map2(a, b, @rdivide, '%s./%s');
     end
     
     function c = mpower(a, b)
+      % New signal carrying the matrix power of 'a' to the 'b'
       c = map2(a, b, @mpower, '%s^%s');
     end
     
     function c = power(a, b)
+      % New signal carrying the element-wise power of 'a' to the 'b'
       c = map2(a, b, @power, '%s.^%s');
     end
     
     function c = mod(a, b)
+      % New signal carrying the modulo operation between signals
       c = map2(a, b, @mod, '%s %% %s');
     end
     
     function y = vertcat(varargin)
+      % New signal carrying the vertical concatenation of signals
       formatSpec = ['[' strJoin(repmat({'%s'}, 1, nargin), '; ') ']'];
       y = mapn(varargin{:}, @vertcat, formatSpec);
     end
     
     function y = horzcat(varargin)
+      % New signal carrying the horizontal concatenation of signals
       formatSpec = ['[' strJoin(repmat({'%s'}, 1, nargin), ' ') ']'];
       y = mapn(varargin{:}, @horzcat, formatSpec);
     end
     
     function c = eq(a, b, handleComparison)
       % New signal carrying the current equality (==) between signals
-      
       if nargin < 3 || ~handleComparison
         c = map2(a, b, @eq, '%s == %s');
       else
@@ -431,31 +449,26 @@ classdef Signal < handle
     
     function c = ge(a, b)
       % New signal carrying the current inequality (>=) between signals
-      
       c = map2(a, b, @ge, '%s >= %s');
     end
     
     function c = gt(a, b)
       % New signal carrying the current inequality (>) between signals
-      
       c = map2(a, b, @gt, '%s > %s');
     end
     
     function c = le(a, b)
-      % New signal carrying the current inequality (<=) between signals
-      
+      % New signal carrying the current inequality (<=) between signals     
       c = map2(a, b, @le, '%s <= %s');
     end
     
     function c = lt(a, b)
-      % New signal carrying the current inequality (<) between signals
-      
+      % New signal carrying the current inequality (<) between signals     
       c = map2(a, b, @lt, '%s < %s');
     end
     
     function c = ne(a, b, handleComparison)
-      % New signal carrying the current non-equality (~=) between signals
-      
+      % New signal carrying the current non-equality (~=) between signals     
       if nargin < 3 || ~handleComparison
         c = map2(a, b, @ne, '%s ~= %s');
       else
@@ -464,14 +477,12 @@ classdef Signal < handle
     end
     
     function c = and(a, b)
-      % New signal carrying the logical AND between signals
-      
+      % New signal carrying the logical AND between signals   
       c = map2(a, b, @and, '%s & %s');
     end
     
     function c = or(a, b)
-      % New signal carrying the logical OR between signals
-      
+      % New signal carrying the logical OR between signals      
       c = map2(a, b, @or, '%s | %s');
     end
     
@@ -486,6 +497,8 @@ classdef Signal < handle
     end
     
     function x = str2num(strSig)
+      % New signal carrying character-to-numeric converted array of the
+      % input signal
       x = map(strSig, @str2num, 'str2num(%s)');
     end
   end

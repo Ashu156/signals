@@ -1,6 +1,10 @@
 classdef Signal < sig.Signal & handle
-  % sig.node.Signal Summary of this class goes here
-  %   Detailed explanation goes here
+  % sig.node.Signal The principle subclass of SIG.SIGNAL, for defining
+  % operations on signals.
+  %   This class creates concrete functions for the abstract, 
+  %   signals-specific methods of SIG.SIGNAL. 
+  %
+  % See also SIG.SIGNAL
   
   properties (Dependent)
     Name
@@ -83,9 +87,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function sc = scan(varargin)
-      % acc = items.scan(f, seed)
-      %   or
-      % acc = scan(items1, f1, items2, f2, ..., seed, ['pars', p1, p2, ...])
+      % applies an accumulator function to a signal's elements
       parsidx = find(cellfun(@(a)ischar(a) && strcmpi(a, 'pars'), varargin));
       if ~isempty(parsidx)
         pars = varargin(parsidx+1:end);
@@ -96,14 +98,14 @@ classdef Signal < sig.Signal & handle
       seed = varargin{end};
       elems = varargin(1:2:end-1);
       funcs = varargin(2:2:end-1);
-      %% formatting
+      % formatting
       funStrs = mapToCell(@toStr, funcs);
       elemStrs = mapToCell(@(e)'%s', elems);
       formatSpec = ['%s.scan(' strJoin(reshape([elemStrs; funStrs], 1, []), ', ') ')'];
       if ~isempty(pars)
         formatSpec = [formatSpec '[' strJoin(mapToCell(@(e)'%s', pars), ', ') ']'];
       end
-      %% derive the scanning signal
+      % derive the scanning signal
       inps = sig.node.from([elems {seed} pars]); % input signals & values -> nodes
       node = sig.node.Node(inps, 'sig.transfer.scan', funcs);
       node.FormatSpec = formatSpec;
@@ -230,10 +232,6 @@ classdef Signal < sig.Signal & handle
     function p = to(a, b)
       p = applyTransferFun(a, b, 'sig.transfer.latch', [], '%s.to(%s)');
       p.Node.CurrValue = false;
-
-%       p = skipRepeats(merge(map(a, @logical), ~b));
-%       p.Node.DisplayInputs = [a.Node b.Node];
-%       p.Node.FormatSpec = '%s.to(%s)';
     end
     
     function tr = setTrigger(set, release)

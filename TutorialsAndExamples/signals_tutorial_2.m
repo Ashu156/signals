@@ -12,7 +12,7 @@ function signals_tutorial_2(t, events, pars, visStim, inputs, outputs, audio)
 % 
 % -- UNCOMMENT --
 % % Set up the wheel
-% wheel = inputs.wheel;
+wheel = inputs.wheel;
 % 
 % % Define the stimulus azimuth by the offset between the wheel and where the
 % % wheel was at the beginning of the trial. Why the delay? Turns out that
@@ -166,26 +166,26 @@ function signals_tutorial_2(t, events, pars, visStim, inputs, outputs, audio)
 %
 % -- UNCOMMENT --
 % Initialize the structure and values
-trials = struct;
-trials.odd = 0;
-trials.even = 0;
-
-% Currently 'trials' is a structure and not an object. We will use the map
-% trick from the first tutorial to convert this into a signal.
-initial_trials_signal = events.expStart.map(@(x) trials);
-
-% We will now set up the scan as before, the only difference here is the
-% use of the method 'subscriptable' which makes the fields of this
-% structure-signal accessible
-trials_signal = events.trialNum.scan(@struct_update,initial_trials_signal).subscriptable;
-
-% Plot out the updating values. Note that the dots here (e.g.
-% trial_signal.odd) is used to access a field and not a signals method
-% because of the 'subscriptable' command above (try omitting it and seeing
-% the error when it gets to this step), but we can still use a method in
-% this syntax (skipRepeats here)
-events.odd = trials_signal.odd.skipRepeats;
-events.even = trials_signal.even.skipRepeats;
+% trials = struct;
+% trials.odd = 0;
+% trials.even = 0;
+% 
+% % Currently 'trials' is a structure and not an object. We will use the map
+% % trick from the first tutorial to convert this into a signal.
+% initial_trials_signal = events.expStart.map(@(x) trials);
+% 
+% % We will now set up the scan as before, the only difference here is the
+% % use of the method 'subscriptable' which makes the fields of this
+% % structure-signal accessible
+% trials_signal = events.trialNum.scan(@struct_update,initial_trials_signal).subscriptable;
+% 
+% % Plot out the updating values. Note that the dots here (e.g.
+% % trial_signal.odd) is used to access a field and not a signals method
+% % because of the 'subscriptable' command above (try omitting it and seeing
+% % the error when it gets to this step), but we can still use a method in
+% % this syntax (skipRepeats here)
+% events.odd = trials_signal.odd.skipRepeats;
+% events.even = trials_signal.even.skipRepeats;
 % ---------------
 % 
 % If you want to play around to see why 'map' doesn't work here, you can

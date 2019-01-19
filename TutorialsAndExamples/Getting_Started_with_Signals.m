@@ -33,7 +33,7 @@
 % signals. 
 %
 % Along the way, you will encounter questions/assignments for you to solve,
-% marked by closed double-dashes. Answers to these questions can be found
+% marked by closed double dashes. Answers to these questions can be found
 % in the **Getting_Started_with_Signals_Answers** file.
 % -- 1) Who created *signals*? --
 
@@ -269,4 +269,33 @@ end
 disp('End Experiment');
 
 %% Create simple visual stimuli using signals
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
