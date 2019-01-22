@@ -89,7 +89,9 @@ classdef Signal < handle
     
     % 'ds = s1.map(f, formatSpec)' returns a dependent signal 'ds' which
     % takes the value resulting from mapping function 'f' onto the value 
-    % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value.
+    % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value. If 'f' is not a
+    % function, 'ds' simply takes the value of 'f' whenever 's1' takes a
+    % value.
     %
     % Example:
     %   f = @(x) x.^2; % the function to be mapped
@@ -102,7 +104,8 @@ classdef Signal < handle
     % 'ds = s1.map2(s2, f, formatSpec)' returns a dependent signal 'ds'
     % which takes the value resulting from "mapping" the function 'f' onto
     % the values in 's1' and 's2' (i.e. 'f(s1, s2)') whenever 's1' or 's2'
-    % takes a value.
+    % takes a value. If 'f' is not a function, 'ds' simply takes the value 
+    % of 'f' whenever 's1' or 's2' takes a value.
     %
     % Example:
     %   f = @(x,y) x.*y + x; % the function to be mapped
@@ -117,7 +120,8 @@ classdef Signal < handle
     % The dependent signal 'ds' takes the value resulting from mapping 
     % function 'f' onto the values of an arbitrary 'n' number of other 
     % signals (i.e. 'f(s2,..., sN)') whenever any of 's1...sN' takes a
-    % value. 
+    % value. If 'f' is not a function, 'ds' simply takes the value of 'f' 
+    % whenever any of 's2...sN' takes a value.
     %
     % Example:
     %   f = @(x,y,z) x+y-z;
