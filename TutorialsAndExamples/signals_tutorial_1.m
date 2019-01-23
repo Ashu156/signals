@@ -1,17 +1,18 @@
 function signals_tutorial_1(t, events, parameters, visStim, inputs, outputs, audio)
-% Signals tutorial 1
-% 170328 - AP
+%% Notes:
+% *Note: code files mentioned in this file will be written within
+% (not including) closed double asterisks. Highlight, right-click and 
+% select "Open" or "Help on" to view these code files. Try it out here on
+% the "sig.Signal" class: **sig.Signal** 
 %
-% Welcome to Signals! Launch this tutorial by running the command 
-% "expTestPanel" in MATLAB and selecting this file from the file explorer.
-% From this point on, it's useful to have the Signals
-% documentation open that lists the available methods: 
-% type 'doc sig.node.Signal'
-%
-% Signals operates by using objects called signals (defined by the class
-% signals/sig.Signal) which have user-defined relationships with each other
-% for when and to what values they update. 
-%
+% Welcome to using *signals* in an experiment definition! Experiment
+% definitions (aka *signals* protocols) are scripts you'll create to run a 
+% *signals* experiment in Rigbox. You can launch this tutorial by executing 
+% **expTestPanel** in MATLAB and selecting this file from the file 
+% explorer. From this point on, it's useful to have the *signals* docs open 
+% that list the available methods - check them out here: 
+% **sig.Signal** **sig.node.Signal**
+
 %% ORIGIN SIGNALS %%
 %
 % There are a few 'origin' signals, on which all other signals depend.

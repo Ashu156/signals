@@ -41,10 +41,10 @@ function elem = grating(t, grating, window)
 
 % Define our default inputs
 if nargin < 3 || isempty(window)
-  window = 'gaussian';
+  window = 'gaussian'; % default probability function
 end
 if nargin < 2 || isempty(grating)
-  grating = 'sinusoid';
+  grating = 'sinusoid'; % default wave function
 end
 
 % Add a new subscriptable origin signal to the same network as the input
@@ -74,7 +74,7 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
 end
 
 function layers = makeLayers(newelem)
-%% make a grating layer of the specified type
+% make a grating layer of the specified type
 switch lower(newelem.grating)
   case {'sinusoid' 'sine' 'sin'}
     [gratingLayer, gratingImg] = vis.sinusoidLayer(newelem.azimuth,...
@@ -99,7 +99,7 @@ gratingLayer.minColour = l.*[newelem.colour 0];
 gratingLayer.maxColour = h.*[newelem.colour 1];
 gratingLayer.show = newelem.show;
 
-%% make a stencil layer using a window of the specified type
+% make a stencil layer using a window of the specified type
 if ~strcmpi(newelem.window, 'none')
   switch lower(newelem.window)
     case {'gaussian' 'gauss'}

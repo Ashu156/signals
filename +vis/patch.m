@@ -1,4 +1,5 @@
 function elem = patch(t, shape)
+<<<<<<< Updated upstream
 %VIS.PATCH Returns a Signals patch stimulus defining a texture of a shape
 %  Produces a visual stimulus of a shape.
 %
@@ -31,7 +32,7 @@ function elem = patch(t, shape)
 
 % Default shape is rectangle
 if nargin < 2 || isempty(shape)
-  shape = 'rectangle';
+  shape = 'rectangle'; % default shape
 end
 
 % Add a new subscriptable origin signal to the same network as the input
@@ -54,10 +55,10 @@ elem.show = false;
 elem.layers = elem.map(@makeLayer).flattenStruct();
 
   function layer = makeLayer(newelem)
-    clear elem t; % eliminate references to unsed outer variables
-    % Make a grating layer of the specified type
+    clear elem t; % eliminate references to unused outer variables
+    % make a grating layer of the specified shape
     switch lower(shape)
-      case {'rectangle' 'rect' 'r'}
+      case {'rectangle', 'rect', 'r'}
         [layer, img] = vis.rectLayer(...
           [newelem.azimuth; newelem.altitude],...
           newelem.dims, newelem.orientation);

@@ -1,8 +1,8 @@
-%% N.B.
+%% Notes:
 % *Note: code files mentioned in this file will be written within
 % (not including) closed double asterisks. Highlight, right-click and 
-% select "Open" to view these code files. Try it out here to open the
-% "sig.Signal" class: **sig.Signal** 
+% select "Open" or "Help on" to view these code files. Try it out here on
+% the "sig.Signal" class: **sig.Signal** 
 %
 % *Note 2: It is convenient and often necessary to use anonymous functions
 % with some *signals* methods. If you are unfamiliar with using anonymous
@@ -269,6 +269,16 @@ end
 disp('End Experiment');
 
 %% Create simple visual stimuli using signals
+
+% The ability to simply and intuitively create custom visual stimuli 
+% is perhaps *signals* most cherished feature. In this section, we'll cover
+% creating a gabor, circle and rectangle. 
+%
+% we'll use **vis.grating** to create a gabor patch drifting grating
+clear all;
+net = sig.Net;
+t = net.origin('t');
+gaborVis = vis.grating(t);
 
 
 

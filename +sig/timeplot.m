@@ -1,9 +1,10 @@
 function listeners = timeplot(varargin)
-%SIG.TIMEPLOT Creates listeners (as signals) which live plot the 'events' signals
+%SIG.PLOT Summary of this function goes here
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
 %   TODO Deal with logging signals & registries & subscriptable signals
 %   TODO Deal with strings, arrays, structures, cell arrays
+%sigs, figh, mode, tWin
 
 % set figure handle, 'figh', for plotting
 [present, value, idx] = namedArg(varargin, 'parent');
@@ -34,38 +35,37 @@ end
 
 clf(figh);
 
-% Initialize cell array to store all signals and their names
-signals = cell(length(varargin),1);
-names = cell(length(varargin),1);
+% create a structure which will contain the signals to be plotted
+sigs = StructRef;
 
+% for all our signals, get their names and values
 for i = 1:length(varargin)
   s = varargin{i};
-  % Get the name of the signal.  If Name is empty, use the variable name
-  name = iff(isempty(s.Name), inputname(i), s.Name);
+  name = genvarname(s.Name);
   switch class(s)
     case {'sig.Registry', 'StructRef'}
-      % For StructRef objects and their subclasses, extract their signals
-      % and set the names to be the fieldnames of the signal
-      names{i} = strcat([name '.'], fieldnames(s));
-      signals{i} = struct2cell(s);
+      %names = strcat([name '_'], fieldnames(s));
+      names = strcat(fieldnames(s));      
+      values = struct2cell(s);
+      for j = 1:length(names)
+        sigs.(names{j}) = values{j};
+      end
     case {'sig.Signal', 'sig.node.Signal', ...
         'sig.node.ScanningSignal', 'sig.node.OriginSignal'}
-      names{i} = name;
-      signals{i} = s;
+      sigs.(name) = s;
     otherwise
       error('Unrecognized type')
   end
 end
 
-% Flatten cell arrays
-signals = cellflat(signals);
-names = cellflat(names);
+names = fieldnames(sigs);
+names{1} = 'Time Signal'; % append 'Time Signal' to our cell array of signal names
 n = numel(names); % number of signals, including 'time signal'
 tstart = [];
-lastval = cell(n,1);
- 
+lastval = cell(n,1); % 'lastval' will hold all signals' preceding values before their next update 
+
 cmap = colormap(figh, 'hsv'); % create a colormap for plotting
-skipsInCmap = ceil(length(cmap) / n); 
+skipsInCmap = ceil(length(cmap) / n);
 cmap = cmap(1:skipsInCmap:end, :);
 
 args = {'linewidth' 2};
@@ -78,14 +78,18 @@ if numel(mode) == 1
   mode = repmat(mode, n, 1); % allow changing plot mode for each signal individually 
 end
 
-% todo: can all of the following for loops be condensed into a single loop?
+signals = struct2cell(sigs); % convert to a cell array for plotting
+
+% can all of the following for loops be condensed into a single loop?
 
 % create and prettify the subtightplots for all signals
 for i = 1:n
   axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  title(axh(i), names{i}, 'interpreter', 'none');
+  curTitle = title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
+%   titlePos = get(curTitle, 'Position');
+%   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
   if i == n    
     xlabel(axh(i), 't (s)', 'fontsize',fontsz);
   else
@@ -93,21 +97,20 @@ for i = 1:n
   end
 end
 
-% hold on and set the font size for all axes handles
-set(axh,'NextPlot','add','fontsize',fontsz);
+set(axh,'NextPlot','add', 'fontsize',fontsz);
 
-% for ii = 1:n
-%   if mode(ii) == 1
-%     plot(axh(ii), [0 100], [0 0]);
-%   end
-% end
+for ii = 1:n
+  if mode(ii) == 1
+    plot(axh(ii), [0 100], [0 0]);
+  end
+end
 
 % add listeners to the signals that will update the plots
-listeners = TidyHandle.empty(n,0);
 for i = 1:n 
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end
 
+%set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
 set(axh, 'Xlim', [0 tWin]);
 
 % 'cycleMode' is a callback which changes plotting mode of signals
