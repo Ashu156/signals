@@ -1,10 +1,9 @@
 function listeners = timeplot(varargin)
-%SIG.PLOT Summary of this function goes here
+%SIG.TIMEPLOT Creates listeners (as signals) which live plot the 'events' signals
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
 %   TODO Deal with logging signals & registries & subscriptable signals
 %   TODO Deal with strings, arrays, structures, cell arrays
-%sigs, figh, mode, tWin
 
 % set figure handle, 'figh', for plotting
 [present, value, idx] = namedArg(varargin, 'parent');
@@ -39,7 +38,7 @@ clf(figh);
 signals = cell(length(varargin),1);
 names = cell(length(varargin),1);
 
- for i = 1:length(varargin)
+for i = 1:length(varargin)
   s = varargin{i};
   % Get the name of the signal.  If Name is empty, use the variable name
   name = iff(isempty(s.Name), inputname(i), s.Name);
@@ -47,23 +46,23 @@ names = cell(length(varargin),1);
     case {'sig.Registry', 'StructRef'}
       % For StructRef objects and their subclasses, extract their signals
       % and set the names to be the fieldnames of the signal
-      names(i) = strcat([name '.'], fieldnames(s));
-      signals(i) = struct2cell(s);
+      names{i} = strcat([name '.'], fieldnames(s));
+      signals{i} = struct2cell(s);
     case {'sig.Signal', 'sig.node.Signal', ...
         'sig.node.ScanningSignal', 'sig.node.OriginSignal'}
       names{i} = name;
       signals{i} = s;
     otherwise
       error('Unrecognized type')
-    end
- end
- 
- % Flatten cell arrays
- signals = cellflat(signals);
- names = cellflat(names);
- n = numel(names); % number of signals, including 'time signal'
- tstart = [];
- lastval = cell(n,1);
+  end
+end
+
+% Flatten cell arrays
+signals = cellflat(signals);
+names = cellflat(names);
+n = numel(names); % number of signals, including 'time signal'
+tstart = [];
+lastval = cell(n,1);
  
 cmap = colormap(figh, 'hsv'); % create a colormap for plotting
 skipsInCmap = ceil(length(cmap) / n); 
@@ -78,8 +77,6 @@ fontsz = 9;
 if numel(mode) == 1
   mode = repmat(mode, n, 1); % allow changing plot mode for each signal individually 
 end
-
-signals = struct2cell(sigs); % convert to a cell array for plotting
 
 % todo: can all of the following for loops be condensed into a single loop?
 
@@ -96,7 +93,8 @@ for i = 1:n
   end
 end
 
-set(axh,'NextPlot','add', 'fontsize',fontsz);
+% hold on and set the font size for all axes handles
+set(axh,'NextPlot','add','fontsize',fontsz);
 
 % for ii = 1:n
 %   if mode(ii) == 1

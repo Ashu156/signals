@@ -1,40 +1,40 @@
 function elem = grating(t, grating, window)
-%VIS.GRATING Returns a Signals grating stimulus defining a grating texture
+%VIS.GRATING Returns a *signals* grating stimulus defining a grating texture
 %  Produces a grating element that is either sinusoidal or square-wave, and
 %  may be windowed by a Gaussian stencil, producing a Gabor patch
 %
 %  Inputs:
-%    t - any signal with which to derive the network ID.  By convetion we
-%      use the t signal
-%    grating - char array defining the nature of the grating. Options are
+%    't' - any signal with which to derive the network ID.  By convention
+%      we use the 't' signal
+%    'grating' - char array defining the nature of the grating. Options are
 %      'sinusoid' (default) or 'squarewave'
-%    window - char array defining the type of windowing applied.  Options
+%    'window' - char array defining the type of windowing applied.  Options
 %      are 'none' (default) or 'gaussian'
 %    
 %  Outputs:
-%    elem - a subscriptable signal containing paramter fields for the
+%    'elem' - a subscriptable signal containing paramter fields for the
 %      stimulus along with the processed texture layers.  Any parameter may
 %      be a signal.  
 % 
 %  Stimulus (elem) parameters:
-%    grating - see above
-%    window - see above
-%    azimuth - the position of the shape in the azimuth (position of the
+%    'grating' - see above
+%    'window' - see above
+%    'azimuth' - the position of the shape in the azimuth (position of the
 %      centre pixel in visual degrees).  Default 0
-%    altitude - the position of the shape in the altitude. Default 0
-%    sigma - if window is Gaussian, the size of the window in visual 
+%    'altitude' - the position of the shape in the altitude. Default 0
+%    'sigma' - if window is Gaussian, the size of the window in visual 
 %      degrees.  Must be an array of the form [width height].  
 %      Default [10 10]
-%    phase - the phase of the grating in visual degrees.  Default 0
-%    spatialFreq - the spatial frequency of the grating in cycles per
+%    'spatialFreq' - the spatial frequency of the grating in cycles per
 %      visual degree.  Default 1/15
-%    orientation - the orientation of the grating in degrees. Default 0
-%    colour - an array defining the intensity of the red, green and blue
+%    'phase' - the phase of the grating in visual degrees.  Default 0
+%    'orientation' - the orientation of the grating in degrees. Default 0
+%    'colour' - an array defining the intensity of the red, green and blue
 %      channels respectively.  Values must be between 0 and 1.  Default [1
 %      1 1]
-%    contrast - the normalized contrast of the grating (between 0 and 1).  
+%    'contrast' - the normalized contrast of the grating (between 0 and 1).  
 %      Default 1
-%    show - a logical indicating whether or not the stimulus is visible.
+%    'show' - a logical indicating whether or not the stimulus is visible.
 %      Default false
 %
 %  See Also VIS.GRATING, VIS.CHECKER6, VIS.GRID, VIS.IMAGE
