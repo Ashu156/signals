@@ -1,5 +1,5 @@
 function axh = timeplot(varargin)
-%SIG.PLOT Summary of this function goes here
+%SIG.TIMEPLOT Summary of this function goes here
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
 %   TODO Deal with logging signals & registries & subscriptable signals
@@ -48,8 +48,9 @@ for i = 1:length(varargin)
     case {'sig.Registry', 'StructRef'}
       % For StructRef objects and their subclasses, extract their signals
       % and set the names to be the fieldnames of the signal
-      names(i) = strcat([name '.'], fieldnames(s));
-      signals(i) = struct2cell(s);
+      %names{i} = strcat([name '.'], fieldnames(s));
+      names{i} = fieldnames(s);
+      signals{i} = struct2cell(s);
     case {'sig.Signal', 'sig.node.Signal', ...
         'sig.node.ScanningSignal', 'sig.node.OriginSignal'}
       names{i} = name;
@@ -62,6 +63,7 @@ end
 % Flatten cell arrays
 signals = cellflat(signals);
 names = cellflat(names);
+names{1} = 't'; % the first signal will always be the 'time' signal
 
 n = numel(names); % number of signals, including 'time signal'
 tstart = [];
@@ -82,23 +84,20 @@ if numel(mode) == 1
   mode = repmat(mode, n, 1); % allow changing plot mode for each signal individually 
 end
 
-signals = struct2cell(sigs); % convert to a cell array for plotting
-
-% todo: can all of the following for loops be condensed into a single loop?
-
 % create and prettify the subtightplots for all signals
+listeners = TidyHandle.empty(n,0); % initialize listeners to the signals that will update the plots
 for i = 1:n
   axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  curTitle = title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
+  curTitle = title(axh(i), names{i}, 'interpreter', 'none');
   if i == n    
     xlabel(axh(i), 't (s)', 'fontsize',fontsz);
   else
     set(axh(i),'XTickLabel',[]);
   end
-  % add listeners to the signals that will update the plots
-  listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
+  % add listeners 
+  listeners(i) = onValue(x_t{i}, @(v)new(i,v));
 end
 
 % set additional figure and axes properties

@@ -1,7 +1,6 @@
 function s = toStr(v)
 %UNTITLED6 Summary of this function goes here
-%   Detailed explanation goes here
-
+%   todo: implement for 'structs'
 if ischar(v)
   s = v;
 elseif isempty(v)
@@ -29,7 +28,7 @@ elseif islogical(v)
     s = num2str(v);
   end
 elseif isstruct(v)
-  warning('toStr:isstruct:Unfinished', 'todo: implement toStr on structs');
+  %warning('toStr:isstruct:Unfinished', 'todo: implement toStr on structs');
   s = ['<' strJoin(fieldnames(v), ',') '>'];
 elseif isa(v, 'function_handle')
   s = func2str(v);

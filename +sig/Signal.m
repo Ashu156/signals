@@ -213,8 +213,8 @@ classdef Signal < handle
     d = lag(this, n)
     
     % 'ds = s1.delay(n)' returns a dependent signal 'ds' which takes as 
-    % value the value of 's1' after a delay of 'n' seconds AND after
-    % SIG.NET.RUNSCHEDULE has been run, whenever 's1' updates.
+    % value the value of 's1' after a delay of 'n' seconds, whenever 
+    % 's1' updates.
     %
     % Example:
     %   ds12 = os1.delay(2);

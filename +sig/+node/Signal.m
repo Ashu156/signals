@@ -425,4 +425,3 @@ classdef Signal < sig.Signal & handle
   methods (Access = protected)
   end
 end
-

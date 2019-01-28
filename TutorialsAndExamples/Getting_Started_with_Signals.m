@@ -1,13 +1,20 @@
 %% Notes:
-% *Note: code files mentioned in this file will be written within
-% (not including) closed double asterisks. Highlight, right-click and 
-% select "Open" or "Help on" to view these code files. Try it out here on
-% the "sig.Signal" class: **sig.Signal** 
+% *Note: code files and commands to be executed that are mentioned in 
+% comments in this file will be written within (not including) closed 
+% angluar brackets (<...>). Highlight, right-click and select "Open" or 
+% "Help on" to view these code files. Try it out here: <sig.Signal> 
 %
 % *Note 2: It is convenient and often necessary to use anonymous functions
 % with some *signals* methods. If you are unfamiliar with using anonymous
-% functions in MATLAB, execute <doc Anonymous Functions> in the command
-% window for a MATLAB primer on using anonymous functions.
+% functions in MATLAB, execute <doc Anonymous Functions> for a MATLAB 
+% primer. Similarly, it may also be helpful to understand the basics of 
+% object-oriented programming. Execute <doc Object-Oriented Programming>
+% for a MATLAB primer.
+%
+% *Note 3: Along the way, you will encounter questions/assignments for you
+% to solve, marked by closed double dashes (--...--). Answers to these 
+% questions can be found in the <Getting_Started_with_Signals_Answers> file.
+% -- 1) Who created *signals*? --
 
 %% Intro:
 % *Signals* was originally developed in order to create and run simple,
@@ -17,12 +24,12 @@
 % is done by representing each parameter of interest as a signal!
 %
 % When creating an experiment that will use *signals*, a *signals* network 
-% - **sig.Net** - must first be created. Every signal belongs to a 
+% - <sig.Net> - must first be created. Every signal belongs to a 
 % *signals* network, and is identifiable in the network by its ID. There
-% are two major types of signals: 1) origin signals (**sig.Net.origin** /
-% **sig.node.OriginSignal**), which are created directly in/by the
+% are two major types of signals: 1) origin signals (<sig.Net.origin> /
+% <sig.node.OriginSignal>), which are created directly in/by the
 % *signals* network, and upon which all other signals depend, and 
-% 2) dependent signals (**sig.Signal** / **sig.node.Signal**), which are 
+% 2) dependent signals (<sig.Signal> / <sig.node.Signal>), which are 
 % created from other signals (first-order dependent signals are created 
 % from origin signals).
 %
@@ -32,12 +39,8 @@
 % visualise their changes over time; 4) create simple visual stimuli using
 % signals. 
 %
-% Along the way, you will encounter questions/assignments for you to solve,
-% marked by closed double dashes. Answers to these questions can be found
-% in the **Getting_Started_with_Signals_Answers** file.
-% -- 1) Who created *signals*? --
 
-%% Create signals in a *signals* network
+%% Part 1: Create signals in a *signals* network
 
 % Let's create a signals network and three origin signals:
 clear all; %#ok<CLALL> clear all workspace, hidden & global vars that might interfere with *signals* 
@@ -46,7 +49,7 @@ os1 = net.origin('os1');
 os2 = net.origin('os2');
 os3 = net.origin('os3');
 
-% let's create **TidyHandle** variables so we can display the output of
+% let's create <TidyHandle> variables so we can display the output of
 % our signals in the command window whenever they get updated
 os1Out = os1.output;
 os2Out = os2.output;
@@ -60,7 +63,7 @@ os3.post([1 2 3; 4 5 6; 7 8 9]); % and even arrays
 % -- 2) Create a 4th origin signal, 'os4'. Post "Hello, *signals*" to this
 % signal, and make sure its output is displayed --
 
-%% Create (and manipulate) dependent signals from our origin signals
+%% Part 2: Create (and manipulate) dependent signals from our origin signals
 
 % Let's use some common MATLAB functions to create new signals from our
 % origin signals:
@@ -135,7 +138,7 @@ clear dsScanOut
 % as value the value of 's1' after a delay of 'n' seconds, whenever 's1' 
 % updates.
 dsDelay = os1.delay(2); dsDelayOut = output(dsDelay);
-% **sig.Net.runSchedule** is a method that checks for and applies
+% <sig.Net.runSchedule> is a method that checks for and applies
 % updates to signals that are to be updated after a delay.
 os1.post(1); pause(2); net.runSchedule; % '1' will be displayed
 clear dsDelayOut
@@ -191,12 +194,12 @@ while n < 5
 end
 disp('End Experiment');
 
-%% Plot signals and visualise their changes over time
+%% Part 3: Plot signals and visualise their changes over time
 
 % Live-plotting signals is useful to visualise how aspects of your
 % experiment are changing over time. When running a *signals* experiment in
-% Rigbox, this plotting is done for you via **sig.timeplot**. In the
-% following block of code, we will take key aspects of **sig.timeplot** to
+% Rigbox, this plotting is done for you via <sig.timeplot>. In the
+% following block of code, we will take key aspects of this function to
 % implement live-plotting of the signals we've created in 4).
 
 % Let's clear our current workspace and re-create our signals from 4)
@@ -212,7 +215,7 @@ trialStr = net.origin('trialStr'); trialStr.post('Trial is Running');
 dispTrialStr = trialStr.at(trialRunning);
 
 sigs = StructRef; % Like MATLAB's 'struct', but for signals
-% Let's put all our signals from 4) into this **StructRef**
+% Let's put all our signals from 4) into this <StructRef>
 sigs.expStart = expStart; 
 sigs.newTrial = newTrial; 
 sigs.endTrial = endTrial;
@@ -268,13 +271,13 @@ while n < 5
 end
 disp('End Experiment');
 
-%% Create simple visual stimuli using signals
+%% Part 4: Create simple visual stimuli using signals
 
 % The ability to simply and intuitively create custom visual stimuli 
 % is perhaps *signals* most cherished feature. In this section, we'll cover
 % creating a gabor, circle and rectangle. 
 %
-% we'll use **vis.grating** to create a gabor patch drifting grating
+% we'll use <vis.grating> to create a gabor patch drifting grating
 clear all;
 net = sig.Net;
 t = net.origin('t');

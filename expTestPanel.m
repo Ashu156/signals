@@ -3,17 +3,10 @@ function expTestPanel(expdef)
 %   Input: Handle to experiment definition function
 
 %% Questions/TODO:
-
-% - vc, vcc?
-% - VBL syncing and DWM compositor issues?
-% - get screen resolution right for PTB 'Screen'
-
-
-% setExpDefPanel;
-% parsInPanel;
-% ctrlgridInPanel; 
-% setExp;
-% plotSigs;
+% - allow for making global parameters conditional
+% - save 'block' file
+% - PTB 'Screen' stuff: vc, vcc? & VBL syncing and DWM compositor issues?
+% & get screen resolution right for PTB 'Screen'
 
 %% Panel UI set-up
 % initialize global/persistent variables and graphics
@@ -164,13 +157,11 @@ end
     isRunning = false;
     tLast = [];
     renderCount = 0;
-    %cursorPos = hw.CursorPosition;
     
     sn = sig.Net;
     dt = sn.origin('dt');
     t = dt.scan(@plus, 0);
-    %cursor = sn.origin('cursor');
-    
+  
     net = t.Node.Net;
     % inputs & outputs
     inputs = sig.Registry; % create inputs as logging signals
@@ -194,15 +185,15 @@ end
     
     [pars, hasNext, repeatNum] = exp.trialConditions(...
       globalPars, allCondPars, advanceTrial);
-    expdef(t, evts, pars, vs, inputs, outputs, audio); %run expdef with origin signals
+    expdef(t, evts, pars, vs, inputs, outputs, audio); % run expdef with origin signals
     
     setCtrlStr = @(h)@(v)set(h, 'String', toStr(v)); % @h = handle, @v = value
     
     cursor = sn.origin('cursor');
     
     listeners = [
-      evts.expStart.into(advanceTrial) %expStart signals advance
-      evts.endTrial.into(advanceTrial) %endTrial signals advance
+      evts.expStart.into(advanceTrial) % expStart signals advance
+      evts.endTrial.into(advanceTrial) % endTrial signals advance
       advanceTrial.map(true).keepWhen(hasNext).into(evts.newTrial) %newTrial if more
       evts.trialNum.onValue(setCtrlStr(trialNumCount))
       cursor.into(inputs.wheel)
@@ -249,17 +240,11 @@ disp('Mouse cursor as wheel input emulator has been set')
 
   function process(~,~)
     tnow = GetSecs;
-    %tic
     post(dt, tnow - tLast);
     % use mouse cursor as wheel input if it has been user selected
-    %post(cursor, GetMouse());
-    %cursorAsWheel = true;
     if cursorAsWheel
       post(cursor, GetMouse());
     end
-    %post(cursor, GetMouse());
-    %post(cursor, readAbsolutePosition(cp));
-    %fprintf('%.0f\n', 1000*toc);
     tLast = tnow;
     runSchedule(sn);
     if invalid
@@ -270,6 +255,17 @@ disp('Mouse cursor as wheel input emulator has been set')
       Screen('Flip', vc, 0);
       renderCount = renderCount + 1;
       invalid = false;
+    end
+    if evts.expStop.Node.CurrValue % end experiment
+      stop(tmr);
+      fprintf(2, '\nExperiment Ended.\n\n');
+      
+      % below: alternate way to display end of experiment using dialog box
+%       hd = dialog('Name','Experiment Ended'); %, 'Position', [300 300 250 150]);
+%       endText = uicontrol('Parent', hd, 'Style', 'text', ...
+%         'Position',[20 150 200 40], ...
+%         'String', 'Your experiment has ended. Close this box to continue.',...
+%         'fontsize', 12); 
     end
   end
 
