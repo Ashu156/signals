@@ -1,19 +1,23 @@
 %% Notes:
-% *Note: code files and commands to be executed that are mentioned in 
-% comments in this file will be written within (not including) closed 
-% angluar brackets (<...>). Highlight, right-click and select "Open" or 
-% "Help on" to view these code files. Try it out here: <sig.Signal> 
-%
-% *Note 2: It is convenient and often necessary to use anonymous functions
-% with some *signals* methods. If you are unfamiliar with using anonymous
-% functions in MATLAB, execute <doc Anonymous Functions> for a MATLAB 
+% *Note 1: Before beginning, please make sure this entire 'tutorials'
+% folder is added to your MATLAB path. 
+% 
+% *Note 2: Code files that are mentioned in this file will be written 
+% within (not including) closed angluar brackets (<...>). Highlight, 
+% right-click and select "Open" or "Help on" to view these code files. 
+% Try it out here: <sig.Signal>
+
+% *Note 3: It is convenient and sometimes necessary to use anonymous
+% functions with some *signals* methods. If you are unfamiliar with using 
+% anonymous functions in MATLAB, run 'doc Anonymous Functions' for a MATLAB 
 % primer. Similarly, it may also be helpful to understand the basics of 
-% object-oriented programming. Execute <doc Object-Oriented Programming>
-% for a MATLAB primer.
+% object-oriented programming. Run 'doc Object-Oriented Programming' for a
+% MATLAB primer.
 %
-% *Note 3: Along the way, you will encounter questions/assignments for you
+% *Note 4: Along the way, you will encounter questions/assignments for you
 % to solve, marked by closed double dashes (--...--). Answers to these 
 % questions can be found in the <Getting_Started_with_Signals_Answers> file.
+%
 % -- 1) Who created *signals*? --
 
 %% Intro:
