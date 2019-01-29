@@ -110,80 +110,82 @@ function tutorialSignalsExperiment(t, events, params, visStim, inputs, outputs, 
 % default in a 'block.mat' file when the experiment ends.
 
 %% Part 2: First version of task
-% *Note: Remember, we are given the origin signals 'events.expStart',
-% 'events.expStop', 'events.newTrial', and 'events.trialNum', so we will
-% build all of our signals off of these origin signals. Additionally, we
-% must create an 'events.endTrial' signal, which *signals* will use to
-% start the next new trial, as soon as 'events.endTrial' takes a value to 
-% signify the end of the current trial.
-%
-% In general, a rough format for building Exp Defs is in the following
-% order:
-% 1) Define 'inputs', 2) Lay-out the experiment and trial framework, 
-% 3) Define 'visStim' 4) Define 'audio', 5) Define 'outputs', 6) Add to
-% 'events', 7) (Optional) Add 'params'
-%
-% We'll take this general approach as we go through this tutorial.
+% % *Note: Remember, we are given the origin signals 'events.expStart',
+% % 'events.expStop', 'events.newTrial', and 'events.trialNum', so we will
+% % build all of our signals off of these origin signals. Additionally, we
+% % must create an 'events.endTrial' signal, which *signals* will use to
+% % start the next new trial, as soon as 'events.endTrial' takes a value to 
+% % signify the end of the current trial.
+% %
+% % In general, a rough format for building Exp Defs is in the following
+% % order:
+% % 1) Define 'inputs', 2) Lay-out the experiment and trial framework, 
+% % 3) Define 'visStim' 4) Define 'audio', 5) Define 'outputs', 6) Add to
+% % 'events', 7) (Optional) Add 'params'
+% %
+% % We'll take this general approach as we go through this tutorial.
+% 
+% % 1) Let's start this Exp Def by setting the 'inputs' (i.e. the wheel) and 
+% % an interactive phase for each trial (i.e. when the rodent will be allowed 
+% % to turn the wheel).
+% interactiveStart = events.newTrial.delay(0.5); % 0.5s after a new trial starts
+% wheel = inputs.wheel.skipRepeats; % signal for wheel (use 'skipRepeats' to only update when wheel moves)
+% wheel0 = wheel.at(interactiveStart); % signal that gets wheel value at onset of each trial
+% deltaWheel = (wheel - wheel0); % signal for how much wheel has moved within a trial, scaled by a factor of 5 
+% 
+% % 2) Let's layout the experiment and trial framework:
+% % Let's define the defaul azimuth for the visual stimulus at trial onset
+% % and define a correct trial as azimuth=0 (when the visual stimulus is 
+% % moved to the center) 
+% azimuthDefault = -45 * events.newTrial; % signal for azimuth at start of each new trial
+% correctMove = (deltaWheel + azimuthDefault) >= 0; % signal for correctly moving stim to center
+% reward = correctMove.skipRepeats; % signal to output reward for every correct move
+% totalReward = reward.scan(@plus, 0); % signal to track total reward
+% endTrial = interactiveStart.setTrigger(reward); % signal to end trial when reward is given, but only after each new interactive trial phase
+% expStop = events.trialNum > 10; % signal to end experiment (after 10 trials)
+% 
+% % 3) Let's create the visual stimulus, link its azimuth to the wheel,
+% % and assign it to 'visStim'.
+% % *Note, somewhat unintuitively, we have to do this *after* defining the
+% % azimuth for the visual stimulus (as we did above), since we first 
+% % needed to define the azimuth position for a correct trial
+% firstVisStim = vis.grating(t); % signal as gabor patch grating (see <vis.grating> for more info)
+% firstVisStim.azimuth = deltaWheel + azimuthDefault; % signal to link azimuth to wheel 
+% firstVisStim.show = interactiveStart.to(endTrial); % signal to display the stimulus only during trial interactive phase
+% visStim.first = firstVisStim; % store this visual stimulus in our visStim StructRef
+% 
+% % 4) Let's create an auditory stimulus that will signify the trial 
+% % interactive phase
+% audioDev = audio.Devices('default'); % assign computer's default audio device to the <audstream.Registry> object
+%  % signal defining onset tone, use 'iff' statement to initialize 'onsetTone' 
+%  % as a signal, see <aud.pureTone> for more info
+% onsetTone = iff(events.expStart, aud.pureTone(2000, 0.25,... 
+%   audioDev.DefaultSampleRate, 0.1, audioDev.NrOutputChannels), 0);
+% audio.default = onsetTone.at(interactiveStart); % signal that actually plays onsetTone at start of trial interactive phase
+% 
+% % 5) Let's set the 'outputs' (i.e. the reward valve).
+% outputs.reward = reward;
+% 
+% % 6) Let's add to the 'events' structure the signals that we want to plot
+% % and save
+% events.endTrial = endTrial; % must ALWAYS define 'events.endTrial'
+% events.expStop = expStop;
+% events.interactiveStart = interactiveStart;
+% events.deltaWheel = deltaWheel;
+% events.reward = reward;
+% events.totalReward = totalReward;
 
-% 1) Let's start this Exp Def by setting the 'inputs' (i.e. the wheel) and 
-% an interactive phase for each trial (i.e. when the rodent will be allowed 
-% to turn the wheel).
-interactiveStart = events.newTrial.delay(0.5); % 0.5s after a new trial starts
-wheel = inputs.wheel.skipRepeats; % signal for wheel (use 'skipRepeats' to only update when wheel moves)
-wheel0 = wheel.at(interactiveStart); % signal that gets wheel value at onset of each trial
-deltaWheel = (wheel - wheel0); % signal for how much wheel has moved within a trial, scaled by a factor of 5 
-
-% 2) Let's layout the experiment and trial framework:
-% Let's define the defaul azimuth for the visual stimulus at trial onset
-% and define a correct trial as azimuth=0 (when the visual stimulus is 
-% moved to the center) 
-azimuthDefault = -45 * events.newTrial; % signal for azimuth at start of each new trial
-correctMove = (deltaWheel + azimuthDefault) >= 0; % signal for correctly moving stim to center
-reward = correctMove.skipRepeats; % signal to output reward for every correct move
-totalReward = reward.scan(@plus, 0); % signal to track total reward
-endTrial = interactiveStart.setTrigger(reward); % signal to end trial when reward is given, but only after each new interactive trial phase
-expStop = events.trialNum > 10; % signal to end experiment (after 10 trials)
-
-% 3) Let's create the visual stimulus, link its azimuth to the wheel,
-% and assign it to 'visStim'.
-% *Note, somewhat unintuitively, we have to do this *after* defining the
-% azimuth for the visual stimulus (as we did above), since we first 
-% needed to define the azimuth position for a correct trial
-firstVisStim = vis.grating(t); % signal as gabor patch grating (see <vis.grating> for more info)
-firstVisStim.azimuth = deltaWheel + azimuthDefault; % signal to link azimuth to wheel 
-firstVisStim.show = interactiveStart.to(endTrial); % signal to display the stimulus only during trial interactive phase
-visStim.first = firstVisStim; % store this visual stimulus in our visStim StructRef
-
-% 4) Let's create an auditory stimulus that will signify the trial 
-% interactive phase
-audioDev = audio.Devices('default'); % assign computer's default audio device to the <audstream.Registry> object
-onsetTone = mapn(2000, 0.25, audioDev.DefaultSampleRate, 0.1, ... % use 'mapn' to turn this array into a signal
-  audioDev.NrOutputChannels, @aud.pureTone); % signal defining onset tone at each new trial, see <aud.pureTone> for more info
-audio.default = onsetTone.at(interactiveStart); % signal that actually plays onsetTone at start of trial interactive phase
-
-% 5) Let's set the 'outputs' (i.e. the reward valve).
-outputs.reward = reward;
-
-% 6) Let's add to the 'events' structure the signals that we want to plot
-% and save
-events.endTrial = endTrial; % must ALWAYS define 'events.endTrial'
-events.expStop = expStop;
-events.interactiveStart = interactiveStart;
-events.deltaWheel = deltaWheel;
-events.reward = reward;
-events.totalReward = totalReward;
-
-% *Note: at this point, we have used all the input arguments in the Exp Def
-% besides 'params'. This will remain the case for the next two versions of
-% the task we'll create, until we get to the final section of this
-% tutorial.
-%
-% To run this Exp Def, run 'expTestPanel' and select this file when the
-% file explorer appears. Then in the GUI, click the 'Apply Parameters'
-% button, followed by the 'Start Experiment' button. After the experiment
-% starts, you will be able to "move the wheel" by moving the mouse cursor.
-% You can right-click over the 'expTestPanel' figure to set/unset the mouse
-% cursor as wheel input emulator.
+% % *Note: at this point, we have used all the input arguments in the Exp Def
+% % besides 'params'. This will remain the case for the next two versions of
+% % the task we'll create, until we get to the final section of this
+% % tutorial.
+% %
+% % To run this Exp Def, run 'expTestPanel' and select this file when the
+% % file explorer appears. Then in the GUI, click the 'Apply Parameters'
+% % button, followed by the 'Start Experiment' button. After the experiment
+% % starts, you will be able to "move the wheel" by moving the mouse cursor.
+% % You can right-click over the 'expTestPanel' figure to set/unset the mouse
+% % cursor as wheel input emulator.
 
 %% Part 3: Second version of task
 % Comment out all other sections and uncomment this section.
@@ -235,21 +237,21 @@ visStim.second = secondVisStim;
 % 4) Let's add auditory stimuli signifying correct and incorrect trials
 
 % The 'onsetTone' is the same as in the previous section
-audioDev = audio.Devices('default'); % assign computer's default audio device to the <audstream.Registry> object
-onsetTone = mapn(2000, 0.25, audioDev.DefaultSampleRate, 0.1, ... % use 'mapn' to turn this array into a signal
-  audioDev.NrOutputChannels, @aud.pureTone); % signal defining onset tone at each new trial, see <aud.pureTone> for more info
-audio.default = onsetTone.at(interactiveStart); % signal that actually plays onsetTone at start of trial interactive phase
+audioDev = audio.Devices('default');
+onsetTone = iff(events.expStart, aud.pureTone(2000, 0.25,... 
+  audioDev.DefaultSampleRate, 0.1, audioDev.NrOutputChannels), 0);
+audio.default = onsetTone.at(interactiveStart);
 
 % The 'rewardTone' has a higher pitch than the 'onsetTone' and is shorter
 % in duration
-rewardTone = mapn(3000, 0.1, audioDev.DefaultSampleRate, 0.01,... 
-  audioDev.NrOutputChannels, @aud.pureTone);
+rewardTone = iff(events.expStart, aud.pureTone(3000, 0.1,... 
+  audioDev.DefaultSampleRate, 0.01, audioDev.NrOutputChannels), 0);
 audio.default = rewardTone.at(reward);
 
 % The 'incorrectTone' will be low pitch a noise burst and 2x as long in
 % duration as 'rewardTone'
-incorrectTone = mapn(audioDev.NrOutputChannels, 0.2 * ...
-  audioDev.DefaultSampleRate, @randn); % generate noise via 'randn'
+incorrectTone = iff(events.expStart, randn(audioDev.NrOutputChannels, ...
+  0.2 * audioDev.DefaultSampleRate), 0); % generate noise burst via 'randn'
 audio.default = incorrectTone.at(incorrectMove);
 
 % 5) The 'outputs' remain the same as in the previous section
