@@ -37,7 +37,7 @@ classdef FieldPanel < handle
       if isempty(obj.ContextMenu)
         obj.ContextMenu = uicontextmenu;
         uimenu(obj.ContextMenu, 'Label', 'Make Coditional', ...
-          'Callback', @obj.makeConditional);
+          'Callback', @(~,~)obj.makeConditional);
       end
       props.BackgroundColor = 'white';
       props.HorizontalAlignment = 'left';
@@ -46,7 +46,7 @@ classdef FieldPanel < handle
       if nargin < 3
         ctrl = uicontrol('Parent', obj.UIPanel, 'Style', 'edit', props);
       end
-      callback = @(src,~)onEdit(obj, src, name{:});
+      callback = @(src,~)onEdit(obj, src, name);
       set(ctrl, 'Callback', callback);
       obj.Labels = [obj.Labels; label];
       obj.Controls = [obj.Controls; ctrl];
@@ -68,31 +68,39 @@ classdef FieldPanel < handle
       obj.Labels(changed).ForegroundColor = [1 0 0];
     end
     
-    function clear(obj)
-      delete(obj.Labels)
-      delete(obj.Controls)
-      obj.Labels = [];
-      obj.LabelWidths = [];
-      obj.Controls = [];
+    function clear(obj, idx) % FIXME Rename to clearFields
+      if nargin == 1
+        idx = true(size(obj.Labels));
+      end
+      delete(obj.Labels(idx))
+      delete(obj.Controls(idx))
+      obj.Labels(idx) = [];
+      obj.LabelWidths(idx) = [];
+      obj.Controls(idx) = [];
     end
     
-    function makeConditional(obj, paramName)
-      [uirow, ~] = find(obj.GlobalControls == ctrls{1});
-      assert(numel(uirow) == 1, 'Unexpected number of matching global controls');
-      cellfun(@(c) delete(c), ctrls);
-      obj.GlobalControls(uirow,:) = [];
-      obj.GlobalGrid.RowSizes(uirow) = [];
-      obj.Parameters.makeTrialSpecific(paramName);
-      obj.fillConditionTable();
-      set(get(obj.GlobalGrid, 'Parent'),...
-          'Heights', sum(obj.GlobalGrid.RowSizes)+45); % Reset height of globalPanel
+    function makeConditional(obj, name)
+      if nargin == 1
+        selected = obj.UIPanel.Parent.CurrentObject;
+        if isa(selected, 'matlab.ui.control.UIControl') && ...
+            strcmp(selected.Style, 'text')
+          name = selected.String;
+        else % Assume control
+          name = obj.Labels([obj.Controls]==selected).String;
+        end
+      end
+      idx = strcmp(name,[obj.Labels.String]);
+      obj.clear(idx);
+      obj.ParamEditor.Parameters.makeTrialSpecific(name);
+      obj.ParamEditor.fillConditionTable();
+      obj.onResize;
     end
     
     function delete(obj)
       disp('delete called');
       delete(obj.UIPanel);
     end
-    
+       
     function onResize(obj, ~, ~)
       if isempty(obj.Controls)
         return
@@ -104,15 +112,7 @@ classdef FieldPanel < handle
         obj.MinRowHeight = l.Extent(4);
         delete(l);
       end
-      
-      function getMouse(obj)
-        [x,y] = GetMouse();
-        figPos = obj.ContextMenu.Parent.Position;
-        x = x - figPos(1);
-        y = y - figPos(2);
-%         rowEdges = 
-      end
-      
+            
 %       %%% resize condition table
 %       w = numel(obj.ConditionTable.ColumnName);
 % %       nCols = max(cols);

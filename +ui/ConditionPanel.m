@@ -4,22 +4,22 @@ classdef ConditionPanel < handle
   
   properties
     ConditionTable
-    MinCtrlWidth = 40
-    MaxCtrlWidth = 140
-    Margin = 4
-    RowSpacing = 1
-    ColSpacing = 3
+%     MinCtrlWidth = 40
+%     MaxCtrlWidth = 140
+%     Margin = 4
+%     RowSpacing = 1
+%     ColSpacing = 3
     UIPanel
     ContextMenu
   end
   
   properties %(Access = protected)
     ParamEditor
-    MinRowHeight
+    NewConditionButton
+    DeleteConditionButton
+    MakeGlobalButton
+    SetValuesButton
     Listener
-    Labels
-    Controls
-    LabelWidths
     SelectedCells %[row, column;...] of each selected cell
   end
   
@@ -27,12 +27,13 @@ classdef ConditionPanel < handle
     function obj = ConditionPanel(f, ParamEditor, varargin)
       obj.ParamEditor = ParamEditor;
       obj.UIPanel = uipanel('Parent', f, 'BorderType', 'none',...
-          'BackgroundColor', 'black', 'Position',  [0.5 0 0.5 1]);
+          'BackgroundColor', 'white', 'Position',  [0.5 0.05 0.5 0.95]);
       obj.Listener = event.listener(obj.UIPanel, 'SizeChanged', @obj.onResize);
+      % Create a child menu for the uicontextmenu
       c = uicontextmenu;
       obj.UIPanel.UIContextMenu = c;
-      % Create a child menu for the uicontextmenu
       obj.ContextMenu = uimenu(c, 'Label', 'Make Global', 'Callback', @(~,~)obj.makeGlobal);
+      % Create condition table
       obj.ConditionTable = uitable('Parent', obj.UIPanel,...
         'FontName', 'Consolas',...
         'RowName', [],...
@@ -42,6 +43,38 @@ classdef ConditionPanel < handle
         'UIContextMenu', c,...
         'CellEditCallback', @obj.onEdit,...
         'CellSelectionCallback', @obj.onSelect);
+      
+      % Create buttons
+      conditionButtonBox = uipanel('BackgroundColor', 'white',...
+          'Position', [0.5 0 0.5 0.05]);
+      props.BackgroundColor = 'white';
+      props.Style = 'pushbutton';
+      props.Units = 'normalized';
+      props.Parent = conditionButtonBox;
+      obj.NewConditionButton = uicontrol(props,...
+        'String', 'New condition',...
+        'Position',[0 0 1/4 1],...
+        'TooltipString', 'Add a new condition',...
+        'Callback', @(~, ~) obj.newCondition());
+      obj.DeleteConditionButton = uicontrol(props,...
+        'String', 'Delete condition',...
+        'Position',[1/4 0 1/4 1],...
+        'TooltipString', 'Delete the selected condition',...
+        'Enable', 'off',...
+        'Callback', @(~, ~) obj.deleteSelectedConditions());
+       obj.MakeGlobalButton = uicontrol(props,...
+         'String', 'Globalise parameter',...
+         'Position',[2/4 0 1/4 1],...
+         'TooltipString', sprintf(['Make the selected condition-specific parameter global (i.e. not vary by trial)\n'...
+            'This will move it to the global parameters section']),...
+         'Enable', 'off',...
+         'Callback', @(~, ~) obj.makeGlobal());
+       obj.SetValuesButton = uicontrol(props,...
+         'String', 'Set values',...
+         'Position',[3/4 0 1/4 1],...
+         'TooltipString', 'Set selected values to specified value, range or function',...
+         'Enable', 'off',...
+         'Callback', @(~, ~) obj.setSelectedValues());
     end
 
     function onEdit(obj, src, eventData)
@@ -81,7 +114,7 @@ classdef ConditionPanel < handle
         return
       end
       %%% resize condition table
-      w = numel(obj.ConditionTable.ColumnName);
+%       w = numel(obj.ConditionTable.ColumnName);
 %       nCols = max(cols);
 %       globalWidth = (fullColWidth * nCols) + borderwidth;
 %       if w > 5; w = 0.5; else; w = 0.1 * w; end
@@ -90,15 +123,17 @@ classdef ConditionPanel < handle
     
     function onSelect(obj, ~, eventData)
       obj.SelectedCells = eventData.Indices;
-%       if size(eventData.Indices, 1) > 0
-        %cells selected, enable buttons
-%         obj.ContextMenu.Visible = 'off';
-%       else
-        %nothing selected, disable buttons
-%         set(obj.MakeGlobalButton, 'Enable', 'off');
-%         set(obj.DeleteConditionButton, 'Enable', 'off');
-%         set(obj.SetValuesButton, 'Enable', 'off');
-%       end
+      if size(eventData.Indices, 1) > 0
+        % cells selected, enable buttons
+        set(obj.MakeGlobalButton, 'Enable', 'on');
+        set(obj.DeleteConditionButton, 'Enable', 'on');
+        set(obj.SetValuesButton, 'Enable', 'on');
+      else
+        % nothing selected, disable buttons
+        set(obj.MakeGlobalButton, 'Enable', 'off');
+        set(obj.DeleteConditionButton, 'Enable', 'off');
+        set(obj.SetValuesButton, 'Enable', 'off');
+      end
     end
 
     function makeGlobal(obj)
@@ -108,6 +143,99 @@ classdef ConditionPanel < handle
       PE = obj.ParamEditor;
       cellfun(@PE.globaliseParamAtCell, names, rows);
     end
+    
+    function deleteSelectedConditions(obj)
+      %DELETESELECTEDCONDITIONS Removes the selected conditions from table
+      % The callback for the 'Delete condition' button.  This removes the
+      % selected conditions from the table and if less than two conditions
+      % remain, globalizes them.
+      %     TODO: comment function better, index in a clearer fashion
+      %
+      % See also EXP.PARAMETERS, GLOBALISESELECTEDPARAMETERS
+      rows = unique(obj.SelectedCells(:,1));
+      names = obj.ConditionTable.ColumnName;
+      numConditions = size(obj.ConditionTable.Data,2);
+      % If the number of remaining conditions is 1 or less...
+      if numConditions-length(rows) <= 1
+          remainingIdx = find(all(1:numConditions~=rows,1));
+          if isempty(remainingIdx); remainingIdx = 1; end
+          % change selected cells to be all fields (except numRepeats which
+          % is assumed to always be the last column)
+          obj.SelectedCells =[ones(length(names),1)*remainingIdx, (1:length(names))'];
+          %... globalize them
+          obj.makeGlobal;
+      else % Otherwise delete the selected conditions as usual
+          obj.ParamEditor.Parameters.removeConditions(rows); %FIXME: Should be in ParamEditor
+      end
+      % Refresh the table of conditions FIXME: Should be in ParamEditor
+      obj.ParamEditor.fillConditionTable();
+    end
+    
+    function setSelectedValues(obj) % Set multiple fields in conditional table
+      disp('updating table cells');
+      cols = obj.SelectedCells(:,2); % selected columns
+      uCol = unique(obj.SelectedCells(:,2));
+      rows = obj.SelectedCells(:,1); % selected rows
+      % get current values of selected cells
+      currVals = arrayfun(@(u)obj.ConditionTable.Data(rows(cols==u),u), uCol, 'UniformOutput', 0);
+      names = obj.ConditionTable.ColumnName(uCol); % selected column names
+      promt = cellfun(@(a,b) [a ' (' num2str(sum(cols==b)) ')'],...
+        names, num2cell(uCol), 'UniformOutput', 0); % names of columns & num selected rows
+      defaultans = cellfun(@(c) c(1), currVals);
+      answer = inputdlg(promt,'Set values', 1, cellflat(defaultans)); % prompt for input
+      if isempty(answer) % if user presses cancel
+        return
+      end
+      % set values for each column
+      cellfun(@(a,b,c) setNewVals(a,b,c), answer, currVals, names, 'UniformOutput', 0);
+      function newVals = setNewVals(userIn, currVals, paramName)
+        % check array orientation
+        currVals = iff(size(currVals,1)>size(currVals,2),currVals',currVals);
+        if strStartsWith(userIn,'@') % anon function
+          func_h = str2func(userIn);
+          % apply function to each cell
+          currVals = cellfun(@str2double,currVals, 'UniformOutput', 0); % convert from char
+          newVals = cellfun(func_h, currVals, 'UniformOutput', 0);
+        elseif any(userIn==':') % array syntax
+          arr = eval(userIn);
+          newVals = num2cell(arr); % convert to cell array
+        elseif any(userIn==','|userIn==';') % 2D arrays
+          C = strsplit(userIn, ';');
+          newVals = cellfun(@(c)textscan(c, '%f',...
+            'ReturnOnError', false,...
+            'delimiter', {' ', ','}, 'MultipleDelimsAsOne', 1),...
+            C);
+        else % single value to copy across all cells
+          userIn = str2double(userIn);
+          newVals = num2cell(ones(size(currVals))*userIn);
+        end
+        
+        if length(newVals)>length(currVals) % too many new values
+          newVals = newVals(1:length(currVals)); % truncate new array
+        elseif length(newVals)<length(currVals) % too few new values
+          % populate as many cells as possible
+          newVals = [newVals ...
+            cellfun(@(a)ui.ParamEditor.controlValue2Param(2,a),...
+            currVals(length(newVals)+1:end),'UniformOutput',0)];
+        end
+        ic = strcmp(obj.ConditionTable.ColumnName, paramName); % find edited param names
+        % update param struct
+        obj.ParamEditor.Parameters.Struct.(paramName)(:,rows(cols==find(ic))) = cell2mat(newVals);
+        % update condtion table with strings
+        obj.ConditionTable.Data(rows(cols==find(ic)),ic)...
+          = cellfun(@(a)ui.ParamEditor.paramValue2Control(a), newVals', 'UniformOutput', 0);
+      end
+      notify(obj.ParamEditor, 'Changed');
+    end
+    
+    function newCondition(obj)
+      disp('adding new condition row');
+      PE = obj.ParamEditor;
+      cellfun(@PE.addEmptyConditionToParam, ...
+        PE.Parameters.TrialSpecificNames);
+      obj.ParamEditor.fillConditionTable();
+    end
+    
     
   end
   

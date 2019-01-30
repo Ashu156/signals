@@ -3,12 +3,16 @@ classdef ParamEditor < handle
   %   Detailed explanation goes here
   
   properties
-    GlobalUI
-    ConditionalUI
     Parameters
   end
   
-  properties
+  properties (Access = private)
+    GlobalUI
+    ConditionalUI
+  end
+  
+  properties (Dependent)
+    Enable
   end
   
   events
@@ -27,6 +31,14 @@ classdef ParamEditor < handle
       obj.buildUI(pars);
     end
     
+    function value = get.Enable(obj)
+      value = obj.Root.Enable;
+    end
+    
+    function set.Enable(obj, value)
+      obj.Root.Enable = value;
+    end
+    
     function buildUI(obj, pars)
       obj.Parameters = pars;
       clear(obj.GlobalUI);
@@ -37,9 +49,9 @@ classdef ParamEditor < handle
         if islogical(pars.Struct.(nm{:})) % If parameter is logical, make checkbox
           ctrl = uicontrol('Parent', c.UIPanel, 'Style', 'checkbox', ...
             'Value', pars.Struct.(nm{:}), 'BackgroundColor', 'white');
-          addField(c, nm, ctrl);
+          addField(c, nm{:}, ctrl);
         else
-          [~, ctrl] = addField(c, nm);
+          [~, ctrl] = addField(c, nm{:});
           ctrl.String = obj.paramValue2Control(pars.Struct.(nm{:}));
         end
       end
@@ -55,6 +67,38 @@ classdef ParamEditor < handle
       data = mapToCell(@(e) obj.paramValue2Control(e), data);
       set(obj.ConditionalUI.ConditionTable, 'ColumnName', titles, 'Data', data,...
         'ColumnEditable', true(1, numel(titles)));
+    end
+    
+    function addEmptyConditionToParam(obj, name)
+      assert(obj.Parameters.isTrialSpecific(name),...
+        'Tried to add a new condition to global parameter ''%s''', name);
+      % work out what the right 'empty' is for the parameter
+      currValue = obj.Parameters.Struct.(name);
+      if isnumeric(currValue)
+        newValue = zeros(size(currValue, 1), 1, class(currValue));
+      elseif islogical(currValue)
+        newValue = false(size(currValue, 1), 1);
+      elseif iscell(currValue)
+        if numel(currValue) > 0
+          if iscellstr(currValue)
+            % if all elements are strings, default to a blank string
+            newValue = {''};
+          elseif isa(currValue{1}, 'function_handle')
+            % first element is a function handle, so create with a @nop
+            % handle
+            newValue = {@nop};
+          else
+            % misc cell case - default to empty element
+            newValue = {[]};
+          end
+        else
+          % misc case - default to empty element
+          newValue = {[]};
+        end
+      else
+        error('Adding empty condition for ''%s'' type not implemented', class(currValue));
+      end
+      obj.Parameters.Struct.(name) = cat(2, obj.Parameters.Struct.(name), newValue);
     end
     
     function newValue = update(obj, name, value, row)
@@ -91,27 +135,9 @@ classdef ParamEditor < handle
       end
       obj.GlobalUI.onResize();
     end
-  
-%     function cellSelectionCallback(obj, ~, eventData)
-%       obj.SelectedCells = eventData.Indices;
-%       if size(eventData.Indices, 1) > 0
-%         %cells selected, enable buttons
-%         set(obj.MakeGlobalButton, 'Enable', 'on');
-%         set(obj.DeleteConditionButton, 'Enable', 'on');
-%         set(obj.SetValuesButton, 'Enable', 'on');
-%       else
-%         %nothing selected, disable buttons
-%         set(obj.MakeGlobalButton, 'Enable', 'off');
-%         set(obj.DeleteConditionButton, 'Enable', 'off');
-%         set(obj.SetValuesButton, 'Enable', 'off');
-%       end
-%     end
-    
+      
   end
   
-  methods
-    
-  end
   methods (Static)
     function data = paramValue2Control(data)
       % convert from parameter value to control value, i.e. a value class
