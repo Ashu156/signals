@@ -12,7 +12,7 @@ classdef FieldPanel < handle
     ContextMenu
   end
   
-  properties (Access = protected)
+  properties %(Access = protected)
     ParamEditor
     MinRowHeight
     Listener
@@ -64,7 +64,7 @@ classdef FieldPanel < handle
           newValue = obj.ParamEditor.update(id, get(src, 'string'));
           set(src, 'String', obj.ParamEditor.paramValue2Control(newValue));
       end
-      changed = strcmp(id,[obj.Labels.String]);
+      changed = strcmp(id,{obj.Labels.String});
       obj.Labels(changed).ForegroundColor = [1 0 0];
     end
     
@@ -89,7 +89,7 @@ classdef FieldPanel < handle
           name = obj.Labels([obj.Controls]==selected).String;
         end
       end
-      idx = strcmp(name,[obj.Labels.String]);
+      idx = strcmp(name,{obj.Labels.String});
       obj.clear(idx);
       obj.ParamEditor.Parameters.makeTrialSpecific(name);
       obj.ParamEditor.fillConditionTable();

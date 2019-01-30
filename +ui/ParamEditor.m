@@ -6,9 +6,11 @@ classdef ParamEditor < handle
     Parameters
   end
   
-  properties (Access = private)
+  properties %(Access = private)
     GlobalUI
     ConditionalUI
+    Parent
+    Listener
   end
   
   properties (Dependent)
@@ -26,17 +28,28 @@ classdef ParamEditor < handle
         f = figure('Name', 'Parameters', 'NumberTitle', 'off',...
           'Toolbar', 'none', 'Menubar', 'none');
       end
+      obj.Parent = f;
+      obj.Listener = event.listener(f, 'SizeChanged', @(~,~)obj.onResize);
       obj.GlobalUI = ui.FieldPanel(f, obj);
       obj.ConditionalUI = ui.ConditionPanel(f, obj);
       obj.buildUI(pars);
     end
-    
-    function value = get.Enable(obj)
-      value = obj.Root.Enable;
-    end
-    
+        
     function set.Enable(obj, value)
-      obj.Root.Enable = value;
+      cUI = obj.ConditionalUI;
+      fig = obj.Parent;
+      if value == true
+        arrayfun(@(prop) set(prop, 'Enable', 'on'), findobj(fig,'Enable','off'));
+        if isempty(cUI.SelectedCells)
+          set(cUI.MakeGlobalButton, 'Enable', 'off');
+          set(cUI.DeleteConditionButton, 'Enable', 'off');
+          set(cUI.SetValuesButton, 'Enable', 'off');
+        end
+        obj.Enable = true;
+      else
+        arrayfun(@(prop) set(prop, 'Enable', 'off'), findobj(fig,'Enable','on'));
+        obj.Enable = false;
+      end
     end
     
     function buildUI(obj, pars)
@@ -63,10 +76,18 @@ classdef ParamEditor < handle
       % Build the condition table
       titles = obj.Parameters.TrialSpecificNames;
       [~, trialParams] = obj.Parameters.assortForExperiment;
-      data = reshape(struct2cell(trialParams), numel(titles), [])';
-      data = mapToCell(@(e) obj.paramValue2Control(e), data);
-      set(obj.ConditionalUI.ConditionTable, 'ColumnName', titles, 'Data', data,...
-        'ColumnEditable', true(1, numel(titles)));
+      if isempty(titles)
+        obj.ConditionalUI.ButtonPanel.Visible = 'off';
+        obj.ConditionalUI.UIPanel.Visible = 'off';
+        obj.GlobalUI.UIPanel.Position(3) = 1;
+      else
+        obj.ConditionalUI.ButtonPanel.Visible = 'on';
+        obj.ConditionalUI.UIPanel.Visible = 'on';
+        data = reshape(struct2cell(trialParams), numel(titles), [])';
+        data = mapToCell(@(e) obj.paramValue2Control(e), data);
+        set(obj.ConditionalUI.ConditionTable, 'ColumnName', titles, 'Data', data,...
+          'ColumnEditable', true(1, numel(titles)));
+      end
     end
     
     function addEmptyConditionToParam(obj, name)
@@ -102,6 +123,7 @@ classdef ParamEditor < handle
     end
     
     function newValue = update(obj, name, value, row)
+      % FIXME change name to updateGlobal
       if nargin < 4; row = 1; end
       currValue = obj.Parameters.Struct.(name)(:,row);
       if iscell(currValue)
@@ -134,8 +156,70 @@ classdef ParamEditor < handle
         ctrl.String = obj.paramValue2Control(value);
       end
       obj.GlobalUI.onResize();
+      obj.notify('Changed');
     end
       
+    function onResize(obj)
+      %%% resize condition table
+      cUI = obj.ConditionalUI.UIPanel;
+      gUI = obj.GlobalUI.UIPanel;
+      
+      pos = obj.GlobalUI.Controls(end).Position;
+      colExtent = pos(1) + pos(3) + obj.GlobalUI.Margin;
+      colWidth = pos(3) + obj.GlobalUI.Margin + obj.GlobalUI.ColSpacing; % FIXME: inaccurate
+      pos = getpixelposition(gUI);
+      gUIExtent = pos(3);
+      pos = getpixelposition(cUI);
+      cUIExtent = pos(3);
+      
+      extent = get(obj.ConditionalUI.ConditionTable, 'Extent');
+      panelWidth = cUI.Position(3);
+      if colExtent > gUIExtent && extent(3) >= 1 && cUIExtent > obj.ConditionalUI.MinWidth
+        % If global UI controls are cut off and there is no dead space in
+        % the table but the minimum table width hasn't been reached, reduce
+        % the conditional UI width: table has scroll bar and global panel
+        % does not
+        % FIXME calculate how much space required for min control width
+%         obj.GlobalUI.MinCtrlWidth
+        % Calculate conditional UI width in normalized units
+        requiredWidth = (cUI.Position(3) / cUIExtent) * (colExtent - gUIExtent);
+        minConditionalWidth = (cUI.Position(3) / cUIExtent) * obj.ConditionalUI.MinWidth;
+        if requiredWidth < minConditionalWidth
+          % If the required width is smaller that the minimum table width,
+          % use minimum table width
+          cUI.Position(3) = minConditionalWidth;
+        else % Otherwise use this width
+          cUI.Position(3) = requiredWidth;
+        end
+        cUI.Position(1) = 1-cUI.Position(3);
+        gUI.Position(3) = 1-cUI.Position(3);
+        elseif extent(3) < 1 && colWidth < obj.GlobalUI.MaxCtrlWidth
+        % If there is dead table space and the global UI columns are cut
+        % off or squashed, reduce the conditional panel
+        cUI.Position(3) = cUI.Position(3) - (panelWidth - (panelWidth * extent(3)));
+        cUI.Position(1) = cUI.Position(1) + (panelWidth - (panelWidth * extent(3)));
+        gUI.Position(3) = cUI.Position(1);
+      elseif extent(3) >= 1 && (colExtent < gUIExtent)
+        % If the table space is cut off and there is dead space in the
+        % global UI panel, reduce the global UI panel
+        % FIXME
+        % If the extra space is minimum, return
+        if floor(gUIExtent - colExtent) <= 2; return; end
+        cUI.Position(3) = cUI.Position(3) - (panelWidth - (panelWidth * extent(3)));
+        cUI.Position(1) = cUI.Position(1) + (panelWidth - (panelWidth * extent(3)));
+        gUI.Position(3) = cUI.Position(1);
+      elseif extent(3) < 1 && (colExtent < gUIExtent)
+        % Plenty of space! Increase conditional UI a bit
+        deadspace = gUIExtent - colExtent; % Spece between panels in pixels
+        % Convert global UI pixels to relative units
+        gUI.Position(3) = (gUI.Position(3) / gUIExtent) * (gUIExtent - (deadspace/2));
+        cUI.Position(1) = gUI.Position(3);
+        cUI.Position(3) = 1-gUI.Position(3);
+      else
+        % Compromise by having both panels take up half the figure
+%         [cUI.Position([1,3]),  gUI.Position(3)] = deal(0.5);
+      end
+    end
   end
   
   methods (Static)

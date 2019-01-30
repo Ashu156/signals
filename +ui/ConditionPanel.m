@@ -4,22 +4,21 @@ classdef ConditionPanel < handle
   
   properties
     ConditionTable
-%     MinCtrlWidth = 40
-%     MaxCtrlWidth = 140
+    MinWidth = 80
+%     MaxWidth = 140
 %     Margin = 4
-%     RowSpacing = 1
-%     ColSpacing = 3
     UIPanel
+    ButtonPanel
     ContextMenu
   end
   
   properties %(Access = protected)
     ParamEditor
+    Listener
     NewConditionButton
     DeleteConditionButton
     MakeGlobalButton
     SetValuesButton
-    Listener
     SelectedCells %[row, column;...] of each selected cell
   end
   
@@ -28,7 +27,6 @@ classdef ConditionPanel < handle
       obj.ParamEditor = ParamEditor;
       obj.UIPanel = uipanel('Parent', f, 'BorderType', 'none',...
           'BackgroundColor', 'white', 'Position',  [0.5 0.05 0.5 0.95]);
-      obj.Listener = event.listener(obj.UIPanel, 'SizeChanged', @obj.onResize);
       % Create a child menu for the uicontextmenu
       c = uicontextmenu;
       obj.UIPanel.UIContextMenu = c;
@@ -45,12 +43,15 @@ classdef ConditionPanel < handle
         'CellSelectionCallback', @obj.onSelect);
       
       % Create buttons
-      conditionButtonBox = uipanel('BackgroundColor', 'white',...
-          'Position', [0.5 0 0.5 0.05]);
+      obj.ButtonPanel = uipanel('BackgroundColor', 'white',...
+          'Position', [0.5 0 0.5 0.05], 'BorderType', 'none');
+        b = obj.ButtonPanel;
+      fcn = @(s)set(obj.ButtonPanel, 'Position', [s.Position(1) b.Position(2) s.Position(3) b.Position(4)]);
+      obj.Listener = event.listener(obj.UIPanel, 'SizeChanged', @(s,~)fcn(s));
       props.BackgroundColor = 'white';
       props.Style = 'pushbutton';
       props.Units = 'normalized';
-      props.Parent = conditionButtonBox;
+      props.Parent = obj.ButtonPanel;
       obj.NewConditionButton = uicontrol(props,...
         'String', 'New condition',...
         'Position',[0 0 1/4 1],...
@@ -107,18 +108,6 @@ classdef ConditionPanel < handle
     function delete(obj)
       disp('delete called');
       delete(obj.UIPanel);
-    end
-    
-    function onResize(obj, ~, ~)
-      if isempty(obj.ConditionTable.Data)
-        return
-      end
-      %%% resize condition table
-%       w = numel(obj.ConditionTable.ColumnName);
-%       nCols = max(cols);
-%       globalWidth = (fullColWidth * nCols) + borderwidth;
-%       if w > 5; w = 0.5; else; w = 0.1 * w; end
-%       obj.UIPanel.Position = [1-w 0 w 1];
     end
     
     function onSelect(obj, ~, eventData)
