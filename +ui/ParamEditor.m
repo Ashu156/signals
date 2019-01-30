@@ -26,13 +26,18 @@ classdef ParamEditor < handle
       if nargin == 0; pars = []; end
       if nargin < 2
         f = figure('Name', 'Parameters', 'NumberTitle', 'off',...
-          'Toolbar', 'none', 'Menubar', 'none');
+          'Toolbar', 'none', 'Menubar', 'none', 'DeleteFcn', @(~,~)obj.delete);
       end
       obj.Parent = f;
       obj.Listener = event.listener(f, 'SizeChanged', @(~,~)obj.onResize);
       obj.GlobalUI = ui.FieldPanel(f, obj);
       obj.ConditionalUI = ui.ConditionPanel(f, obj);
       obj.buildUI(pars);
+    end
+    
+    function delete(obj)
+      delete(obj.GlobalUI);
+      delete(obj.ConditionalUI);
     end
         
     function set.Enable(obj, value)
@@ -59,6 +64,7 @@ classdef ParamEditor < handle
       c = obj.GlobalUI;
       names = pars.GlobalNames;
       for nm = names'
+        if strcmp(nm, 'randomiseConditions'); continue; end
         if islogical(pars.Struct.(nm{:})) % If parameter is logical, make checkbox
           ctrl = uicontrol('Parent', c.UIPanel, 'Style', 'checkbox', ...
             'Value', pars.Struct.(nm{:}), 'BackgroundColor', 'white');
@@ -70,6 +76,30 @@ classdef ParamEditor < handle
       end
       obj.fillConditionTable();
       obj.GlobalUI.onResize();
+      %%% Special parameters
+      if ismember('randomiseConditions', obj.Parameters.Names) && ~pars.Struct.randomiseConditions
+        obj.ConditionalUI.ConditionTable.RowName = 'numbered';
+        set(obj.ConditionalUI.ContextMenus(2), 'Checked', 'off');
+      end
+    end
+    
+    function setRandomized(obj, value)
+      % If randomiseConditions doesn't exist and new value is false, add
+      % the parameter and set it to false
+      if ~ismember('randomiseConditions', obj.Parameters.Names) && value == false
+        description = 'Whether to randomise the conditional paramters or present them in order';
+        obj.Parameters.set('randomiseConditions', false, description, 'logical')
+      elseif ismember('randomiseConditions', obj.Parameters.Names)
+        obj.update('randomiseConditions', logical(value));
+      end
+      menu = obj.ConditionalUI.ContextMenus(2);
+      if value == false
+        obj.ConditionalUI.ConditionTable.RowName = 'numbered';
+        menu.Checked = 'off';
+      else
+        obj.ConditionalUI.ConditionTable.RowName = [];
+        menu.Checked = 'on';
+      end
     end
     
     function fillConditionTable(obj)
@@ -161,6 +191,7 @@ classdef ParamEditor < handle
       
     function onResize(obj)
       %%% resize condition table
+      notify(obj.ConditionalUI.ButtonPanel, 'SizeChanged');
       cUI = obj.ConditionalUI.UIPanel;
       gUI = obj.GlobalUI.UIPanel;
       
@@ -174,7 +205,7 @@ classdef ParamEditor < handle
       
       extent = get(obj.ConditionalUI.ConditionTable, 'Extent');
       panelWidth = cUI.Position(3);
-      if colExtent > gUIExtent && extent(3) >= 1 && cUIExtent > obj.ConditionalUI.MinWidth
+      if colExtent > gUIExtent && cUIExtent > obj.ConditionalUI.MinWidth
         % If global UI controls are cut off and there is no dead space in
         % the table but the minimum table width hasn't been reached, reduce
         % the conditional UI width: table has scroll bar and global panel
@@ -193,32 +224,33 @@ classdef ParamEditor < handle
         end
         cUI.Position(1) = 1-cUI.Position(3);
         gUI.Position(3) = 1-cUI.Position(3);
-        elseif extent(3) < 1 && colWidth < obj.GlobalUI.MaxCtrlWidth
+      elseif extent(3) < 1 && colWidth < obj.GlobalUI.MaxCtrlWidth
         % If there is dead table space and the global UI columns are cut
         % off or squashed, reduce the conditional panel
         cUI.Position(3) = cUI.Position(3) - (panelWidth - (panelWidth * extent(3)));
         cUI.Position(1) = cUI.Position(1) + (panelWidth - (panelWidth * extent(3)));
         gUI.Position(3) = cUI.Position(1);
-      elseif extent(3) >= 1 && (colExtent < gUIExtent)
-        % If the table space is cut off and there is dead space in the
-        % global UI panel, reduce the global UI panel
-        % FIXME
-        % If the extra space is minimum, return
-        if floor(gUIExtent - colExtent) <= 2; return; end
-        cUI.Position(3) = cUI.Position(3) - (panelWidth - (panelWidth * extent(3)));
-        cUI.Position(1) = cUI.Position(1) + (panelWidth - (panelWidth * extent(3)));
-        gUI.Position(3) = cUI.Position(1);
-      elseif extent(3) < 1 && (colExtent < gUIExtent)
+      elseif extent(3) < 1 && colExtent < gUIExtent
         % Plenty of space! Increase conditional UI a bit
         deadspace = gUIExtent - colExtent; % Spece between panels in pixels
         % Convert global UI pixels to relative units
         gUI.Position(3) = (gUI.Position(3) / gUIExtent) * (gUIExtent - (deadspace/2));
         cUI.Position(1) = gUI.Position(3);
         cUI.Position(3) = 1-gUI.Position(3);
+      elseif extent(3) >= 1 && colExtent < gUIExtent
+        % If the table space is cut off and there is dead space in the
+        % global UI panel, reduce the global UI panel
+        % If the extra space is minimum, return
+        if floor(gUIExtent - colExtent) <= 2; return; end
+        deadspace = gUIExtent - colExtent; % Spece between panels in pixels
+        gUI.Position(3) = (gUI.Position(3) / gUIExtent) * (gUIExtent - deadspace);
+        cUI.Position(3) = 1-gUI.Position(3);
+        cUI.Position(1) = gUI.Position(3);
       else
         % Compromise by having both panels take up half the figure
 %         [cUI.Position([1,3]),  gUI.Position(3)] = deal(0.5);
       end
+      notify(obj.ConditionalUI.ButtonPanel, 'SizeChanged');
     end
   end
   

@@ -37,14 +37,15 @@ classdef FieldPanel < handle
       if isempty(obj.ContextMenu)
         obj.ContextMenu = uicontextmenu;
         uimenu(obj.ContextMenu, 'Label', 'Make Coditional', ...
-          'Callback', @(~,~)obj.makeConditional);
+          'MenuSelectedFcn', @(~,~)obj.makeConditional);
       end
       props.BackgroundColor = 'white';
       props.HorizontalAlignment = 'left';
       props.UIContextMenu = obj.ContextMenu;
-      label = uicontrol('Parent', obj.UIPanel, 'Style', 'text', 'String', name, props);
+      props.Parent = obj.UIPanel;
+      label = uicontrol('Style', 'text', 'String', name, props);
       if nargin < 3
-        ctrl = uicontrol('Parent', obj.UIPanel, 'Style', 'edit', props);
+        ctrl = uicontrol('Style', 'edit', props);
       end
       callback = @(src,~)onEdit(obj, src, name);
       set(ctrl, 'Callback', callback);
@@ -90,6 +91,9 @@ classdef FieldPanel < handle
         end
       end
       idx = strcmp(name,{obj.Labels.String});
+      assert(~ismember(name, {'randomiseConditions'}), ...
+        '%s can not be made a conditional parameter', name)
+      
       obj.clear(idx);
       obj.ParamEditor.Parameters.makeTrialSpecific(name);
       obj.ParamEditor.fillConditionTable();
