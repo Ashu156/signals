@@ -1,4 +1,12 @@
+%% Todo:
+% 1) Signal creation both from methods and functions
+% 2) "Instantaneous" signals
+% 3) Common errors using signals
+
 %% Notes:
+% Author: Jai Bhagat - j.bhagat@ucl.ac.uk (w/inspiration from Miles Wells
+% and Andy Peters)
+
 % *Note 1: Before beginning, please make sure this entire 'tutorials'
 % folder is added to your MATLAB path. 
 % 

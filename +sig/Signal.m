@@ -90,8 +90,8 @@ classdef Signal < handle
     % 'ds = s1.map(f, formatSpec)' returns a dependent signal 'ds' which
     % takes the value resulting from mapping function 'f' onto the value 
     % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value. If 'f' is not a
-    % function, 'ds' simply takes the value of 'f' whenever 's1' takes a
-    % value.
+    % function, 'map' acts like 'at': 'ds' simply takes the value of 'f' 
+    % whenever 's1' takes a value.
     %
     % Example:
     %   f = @(x) x.^2; % the function to be mapped
@@ -125,7 +125,7 @@ classdef Signal < handle
     %
     % Example:
     %   f = @(x,y,z) x+y-z;
-    %   ds6 = os1.map2(os2, os3, f);
+    %   ds6 = os1.mapn(os2, os3, f);
     %   ds6Out = output(ds6);
     %   os1.post(1);
     %   os2.post(2);
@@ -228,9 +228,9 @@ classdef Signal < handle
     d = delay(this, period)
     
     % 'ds = s1.merge(s2...sN)' returns a dependent signal 'ds' which takes
-    % as value the value of the last input signal to update. If multiple 
-    % signals update during the same transaction, 'ds' will update to the 
-    % signal which is earlier in the input argument list 
+    % as value the value of the most recent input signal to update. If 
+    % multiple signals update during the same transaction, 'ds' will update
+    % to the signal which is earlier in the input argument list 
     %
     % Example:
     %   ds1 = os1.at(os3);

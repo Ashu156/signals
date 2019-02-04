@@ -5,8 +5,8 @@ function expTestPanel(expdef)
 %% Questions/TODO:
 % - allow for making global parameters conditional
 % - save 'block' file
-% - PTB 'Screen' stuff: vc, vcc? & VBL syncing and DWM compositor issues?
-% & get screen resolution right for PTB 'Screen'
+% - delete 'Wheel Position' slider and improve behavior of unsetting cursor as wheel
+% - PTB 'Screen' stuff: vc, vcc? & VBL syncing and DWM compositor issues? & get screen resolution right for PTB 'Screen'
 
 %% Panel UI set-up
 % initialize global/persistent variables and graphics
@@ -231,8 +231,10 @@ disp('Mouse cursor as wheel input emulator has been set')
     if strcmp(get(src, 'SelectionType'), 'extend')
       cursorAsWheel = not(cursorAsWheel);
       if cursorAsWheel
+        % set last position of mouse=0
         disp('Mouse cursor as wheel input emulator has been set')
       else
+        % get the last position of the mouse
         disp('Mouse cursor as wheel input emulator unset')
       end
     end
@@ -243,7 +245,7 @@ disp('Mouse cursor as wheel input emulator has been set')
     post(dt, tnow - tLast);
     % use mouse cursor as wheel input if it has been user selected
     if cursorAsWheel
-      post(cursor, GetMouse());
+      post(cursor, GetMouse()); % - last position of mouse
     end
     tLast = tnow;
     runSchedule(sn);
