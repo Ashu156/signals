@@ -87,6 +87,40 @@ classdef Signal < handle
     
     s = keepWhen(what, when)
     
+    % 'ds = s1.to(s2)' returns a dependent signal 'ds' which can only ever
+    % take a value of 1 or 0. 'ds' initially takes a value of 1 when 's1'
+    % takes a truthy value. 'ds' then alternates between updating to '0'
+    % the first time 's2' updates to a truthy value after 's1' has updated
+    % to a truthy value, and updating to '1' the first time 's1' updates
+    % to a truthy value after 's2' has updated to a truthy value.
+    %
+    % Example:
+    %   ds4 = os1.to(os2);
+    %   ds4Out = output(ds4);
+    %   os1.post(1); % '1' will be displayed
+    %   os1.post(2); % nothing will be displayed
+    %   os2.post(1); % '0' will be displayed
+    %   os1.post(0); % nothing will be displayed
+    %   os1.post(1); % '1' will be displayed
+    
+    p = to(a, b)
+    
+    % 'ds = s1.setTrigger(s2)' returns a dependent signal 'ds' which can
+    % only ever take a value of 1. 'ds' initially updates to 1 when 's2' is
+    % set to a truthy value, given that 's1' has a truthy value.
+    % Additional updates of 'ds' take place whenever 's2' is set to a
+    % truthy value, given that 's1' has been "reset" to a truthy value.
+    %
+    % Example:
+    %   ds5 = os1.setTrigger(os2);
+    %   ds5Out = output(ds5);
+    %   os2.post(1); % nothing will be displayed
+    %   os1.post(1); os2.post(2); % '1' will be displayed
+    %   os2.post(3); % nothing will be displayed (value of 'ds13' remains 1)
+    %   os1.post(2); os2.post(4); % '1' will be displayed
+    
+    tr = setTrigger(arm, release)
+    
     % 'ds = s1.map(f, formatSpec)' returns a dependent signal 'ds' which
     % takes the value resulting from mapping function 'f' onto the value 
     % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value. If 'f' is not a
@@ -95,8 +129,8 @@ classdef Signal < handle
     %
     % Example:
     %   f = @(x) x.^2; % the function to be mapped
-    %   ds4 = os1.map(f);
-    %   ds4Out = output(ds4); 
+    %   ds6 = os1.map(f);
+    %   ds6Out = output(ds6); 
     %   os1.post([1 2 3]); % '[1 4 9]' will be displayed
     
     m = map(this, f, varargin)
@@ -109,8 +143,8 @@ classdef Signal < handle
     %
     % Example:
     %   f = @(x,y) x.*y + x; % the function to be mapped
-    %   ds5 = os1.map2(os2, f);
-    %   ds5Out = output(ds5);
+    %   ds7 = os1.map2(os2, f);
+    %   ds7Out = output(ds7);
     %   os2.post([4 5 6]);
     %   os1.post([1 2 3]); % '[5 12 21]' will be displayed
     
@@ -125,8 +159,8 @@ classdef Signal < handle
     %
     % Example:
     %   f = @(x,y,z) x+y-z;
-    %   ds6 = os1.mapn(os2, os3, f);
-    %   ds6Out = output(ds6);
+    %   ds8 = os1.mapn(os2, os3, f);
+    %   ds8Out = output(ds8);
     %   os1.post(1);
     %   os2.post(2);
     %   os3.post(3); % '0' will be displayed
@@ -144,36 +178,45 @@ classdef Signal < handle
     %
     % Example:
     %   f = @plus;
-    %   ds7 = os1.scan(f, 5);
-    %   ds7Out = output(ds7);
+    %   ds9 = os1.scan(f, 5);
+    %   ds9Out = output(ds9);
     %   os1.post([1 2 3]); % '[6 7 8]' will be displayed
 
     s = scan(this, f, seed)
     
-    % 'ds = idx.selectFrom(option1...optionN)' returns a dependent signal
-    % 'ds' which, whenever the signal 'idx' takes an integer value, takes
-    % a value based on 1 of 3 cases. Case 1: When 'idx >= 1 && idx <= N', 
-    % 'ds' takes the value of the input argument signal (in the input 
-    % argument list) indexed with the value of 'idx.' Case 2: When 
-    % 'idx == 0', 'ds = 0'. Case 3: When 'idx > N', 'ds' is not updated.
-    % 
-    % Example: 
-    %   ds8 = os1.selectFrom(os2, os3);
-    %   ds8Out = output(ds8);
-    %   os2.post(2); os3.post(3);
-    %   os1.post(1); % '2' will be displayed
-    %   os1.post(2); % '3' will be displayed
-    %   os1.post(3); % nothing will be displayed (value of 'ds7' remains 3)
+    % 'ds = s1.skipRepeats' returns a dependent signal 'ds' which takes the
+    % value of 's1' only when 's1' updates to a value different from
+    % its current value.
+    %
+    % Example:
+    %   ds10 = os1.skipRepeats;
+    %   ds10Out = output(ds10);
+    %   os1.post(1); % '1' will be displayed
+    %   os1.post(1); % nothing will be displayed (value of 'ds14' remains 1)
+    %   os1.post(2); % '2' will be displayed
     
-    s = selectFrom(this, varargin)
+    nr = skipRepeats(this)
+    
+    % 'ds = s1.delta' returns a dependent signal 'ds' which takes the value
+    % of the difference between the current value of 's1' and its previous
+    % value.
+    %
+    % Example:
+    %   ds11 = os1.delta;
+    %   ds11Out = output(ds11);
+    %   os1.post(1);
+    %   os1.post(10); % '9' will be displayed
+    %   os1.post(5); % '-5' will be displayed
+    
+    d = delta(this)
     
     % 'ds = s1.bufferUpTo(n)' returns a dependent signal 'ds' which takes 
     % as value the last 'n' values 's1' took. When the number of updates
     % of 's1' is fewer than 'n', 'ds' takes as value all of those updates.
     % 
     % Example:
-    %   ds9 = os1.bufferUpTo(3);
-    %   ds9Out = output(ds9);
+    %   ds12 = os1.bufferUpTo(3);
+    %   ds12Out = output(ds12);
     %   os1.post(1); % '1' will be displayed
     %   os1.post(2); % '[1 2]' will be displayed
     %   os1.post(3); % '[1 2 3]' will be displayed
@@ -188,8 +231,8 @@ classdef Signal < handle
     % 's1' is fewer than 'n', 'ds' takes no value.
     %
     % Example:
-    %   ds10 = os1.buffer(3);
-    %   ds10Out = output(ds10);
+    %   ds13 = os1.buffer(3);
+    %   ds13Out = output(ds13);
     %   os1.post(1); % nothing will be displayed
     %   os1.post(2); % nothing will be displayed
     %   os1.post(3); % '[1 2 3]' will be displayed
@@ -202,8 +245,8 @@ classdef Signal < handle
     % "lags" behind 's1' by 'n' updates.
     %
     % Example:
-    %   ds11 = os1.lag(2)
-    %   ds11Out = output(ds11);
+    %   ds14 = os1.lag(2)
+    %   ds14Out = output(ds14);
     %   os1.post(1); nothing will be displayed
     %   os1.post(2); nothing will be displayed
     %   os1.post(3); '3' will be displayed
@@ -217,8 +260,8 @@ classdef Signal < handle
     % 's1' updates.
     %
     % Example:
-    %   ds12 = os1.delay(2);
-    %   ds12Out = output(ds12);
+    %   ds15 = os1.delay(2);
+    %   ds15Out = output(ds15);
     %   % 'runSchedule' is a 'Net' method that checks for and applies
     %   updates to signals that are being updated via a delay.
     %   os1.post(1); pause(2); net.runSchedule; % '1' will be displayed
@@ -227,63 +270,6 @@ classdef Signal < handle
     
     d = delay(this, period)
     
-    % 'ds = s1.merge(s2...sN)' returns a dependent signal 'ds' which takes
-    % as value the value of the most recent input signal to update. If 
-    % multiple signals update during the same transaction, 'ds' will update
-    % to the signal which is earlier in the input argument list 
-    %
-    % Example:
-    %   ds1 = os1.at(os3);
-    %   ds13 = os1.merge(os2,ds1,os3);
-    %   ds13Out = output(ds13);
-    %   os1.post(1); % '1' will be displayed
-    %   os2.post(2); % '2' will be displayed
-    %   os3.post(3); % '1' will be displayed
-    
-    m = merge(this, varargin)
-    
-    % 'ds = setTrigger(s1,s2)' returns a dependent signal 'ds' which can
-    % only ever take a value of 1. 'ds' initially updates to 1 when 's2' is
-    % set to a truthy value, given that 's1' has a truthy value. 
-    % Additional updates of 'ds' take place whenever 's2' is set to a
-    % truthy value, given that 's1' has been "reset" to a truthy value.
-    % 
-    % Example: 
-    %   ds14 = setTrigger(os1,os2);
-    %   ds14Out = output(ds14);
-    %   os2.post(1); % nothing will be displayed
-    %   os1.post(1); os2.post(2); % '1' will be displayed
-    %   os2.post(3); % nothing will be displayed (value of 'ds13' remains 1)
-    %   os1.post(2); os2.post(4); % '1' will be displayed
-  
-    tr = setTrigger(arm, release)
-    
-    % 'ds = s1.skipRepeats' returns a dependent signal 'ds' which takes the
-    % value of 's1' only when 's1' updates to a value different from 
-    % its current value.
-    %
-    % Example: 
-    %   ds15 = os1.skipRepeats;
-    %   ds15Out = output(ds15);
-    %   os1.post(1); % '1' will be displayed
-    %   os1.post(1); % nothing will be displayed (value of 'ds14' remains 1)
-    %   os1.post(2); % '2' will be displayed
-    
-    nr = skipRepeats(this)
-    
-    % 'ds = s1.delta' returns a dependent signal 'ds' which takes the value
-    % of the difference between the current value of 's1' and its previous
-    % value.
-    %
-    % Example:
-    %   ds16 = os1.delta;
-    %   ds16Out = output(ds16);
-    %   os1.post(1);
-    %   os1.post(10); % '9' will be displayed
-    %   os1.post(5); % '-5' will be displayed
-    
-    d = delta(this)
-    
     % 'ds = s1.log' returns a dependent signal, 'ds' which takes as value a
     % structure with two fields, 'time' and 'value'. Each element in 'time'
     % is the time of the last update of 's1' (in seconds, via the PTB
@@ -291,11 +277,43 @@ classdef Signal < handle
     % value of that update. 'ds2' updates whenever 's1' takes a value.
     %
     % Example:
-    %   ds17 = os1.log;
-    %   ds17Out = output(ds17);
+    %   ds16 = os1.log;
+    %   ds16Out = output(ds16);
     %   os1.post(1); os1.post(2); os1.post(3); % a 1x3 struct array will be displayed
     
     l = log(this)
+    
+    % 'ds = s1.merge(s2...sN)' returns a dependent signal 'ds' which takes
+    % as value the value of the most recent input signal to update. If 
+    % multiple signals update during the same transaction, 'ds' will update
+    % to the signal which is earlier in the input argument list 
+    %
+    % Example:
+    %   ds1 = os1.at(os3);
+    %   ds17 = os1.merge(os2,ds1,os3);
+    %   ds17Out = output(ds17);
+    %   os1.post(1); % '1' will be displayed
+    %   os2.post(2); % '2' will be displayed
+    %   os3.post(3); % '1' will be displayed
+    
+    m = merge(this, varargin)
+    
+    % 'ds = idx.selectFrom(option1...optionN)' returns a dependent signal
+    % 'ds' which, whenever the signal 'idx' takes an integer value, takes
+    % a value based on 1 of 3 cases. Case 1: When 'idx >= 1 && idx <= N', 
+    % 'ds' takes the value of the input argument signal (in the input 
+    % argument list) indexed with the value of 'idx.' Case 2: When 
+    % 'idx == 0', 'ds = 0'. Case 3: When 'idx > N', 'ds' is not updated.
+    % 
+    % Example: 
+    %   ds18 = os1.selectFrom(os2, os3);
+    %   ds18Out = output(ds18);
+    %   os2.post(2); os3.post(3);
+    %   os1.post(1); % '2' will be displayed
+    %   os1.post(2); % '3' will be displayed
+    %   os1.post(3); % nothing will be displayed (value of 'ds7' remains 3)
+    
+    s = selectFrom(this, varargin)
     
     % 'ds = indexOfFirst(s1, ..., sN)' returns a dependent signal 'ds'
     % which takes as value the index of the first signal with a truthy
@@ -303,8 +321,8 @@ classdef Signal < handle
     % truthy node value, then the node value of 'ds' = N+1.
     %
     % Example:
-    %   ds18 = indexOfFirst(os1, os2, os3);
-    %   ds18 = output(ds18);
+    %   ds19 = indexOfFirst(os1, os2, os3);
+    %   ds19 = output(ds19);
     %   os1.post(0); % '4' will be displayed
     %   os3.post(1); % '3' will be displayed
     
@@ -319,32 +337,14 @@ classdef Signal < handle
     % does not take a value.
     %
     % Example:
-    %   ds19 = cond(os1>0, 1, os2>0, 2);
-    %   ds19Out = output(ds19);
+    %   ds20 = cond(os1>0, 1, os2>0, 2);
+    %   ds20Out = output(ds20);
     %   os1.post(0); % nothing will be displayed
     %   os1.post(1); % '1' will be displayed
     %   os2.post(1); % '1' will be displayed again
     %   os1.post(0); % '2' will be displayed
     
     c = cond(pred1, value1, varargin)
-    
-    % 'ds = to(s1,s2)' returns a dependent signal 'ds' which can only ever
-    % take a value of 1 or 0. 'ds' initially takes a value of 1 when 's1'
-    % takes a truthy value. 'ds' then alternates between updating to '0' 
-    % the first time 's2' updates to a truthy value after 's1' has updated 
-    % to a truthy value, and updating to '1' the first time 's1' updates 
-    % to a truthy value after 's2' has updated to a truthy value.
-    %
-    % Example:
-    %   ds20 = to(os1, os2);
-    %   ds20Out = output(ds20);
-    %   os1.post(1); % '1' will be displayed
-    %   os1.post(2); % nothing will be displayed
-    %   os2.post(1); % '0' will be displayed
-    %   os1.post(0); % nothing will be displayed
-    %   os1.post(1); % '1' will be displayed
-    
-    p = to(a, b)
     
   end
   

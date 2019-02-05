@@ -1,5 +1,7 @@
 function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, audio)
-%TUTORIALSIGNALSEXPERIMENT *Signals* Experiment Definition Tutorial
+%SIGNALSEXPERIMENTTUTORIAL *Signals* Experiment Definition Tutorial
+%% Todos: 
+% - mention how to repeat incorrect trials?
 %% Notes:
 % Author: Jai Bhagat - j.bhagat@ucl.ac.uk (w/inspiration from Miles Wells
 % and Andy Peters)
@@ -88,9 +90,10 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % plus new signals added to it by the experimenter (e.g. 
 % 'events.correctTrial').
 %
-% 'params' - This is a 'struct' containing experimenter defined parameters
-% as signals, which will be used during the experiment. These parameters 
-% will be given a default value, but can be changed by the experimenter in 
+% 'params' - This is a <sig.SubscriptableSignal> object that *Signals* 
+% turns into a Struct, containing experimenter defined parameters as
+% signals, which will be used during the experiment. These parameters will
+% be given a default value, but can be changed by the experimenter in 
 % real-time during the experiment.
 %
 % 'visStim' - This is a <sig.StructRef> object containining fields as
@@ -123,9 +126,9 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 %
 % % In general, a rough format for building Exp Defs is in the following
 % % order:
-% % 0) (Optional) Add 'params', 1) Define 'inputs', 2) Lay-out the experiment 
-% % and trial framework, 3) Define 'visStim' 4) Define 'audio', 5) Define 
-% % 'outputs', 6) Add to 'events'
+% % 1) Define 'inputs', 2) Lay-out the experiment and trial framework, 
+% % 3) Define 'visStim' 4) Define 'audio', 5) Define 'outputs', 6) Add to 
+% % 'events', 7) (Optional) Add 'params'
 % 
 % % We'll take this general approach as we go through this tutorial. We'll
 % % skip adding parameters until the final part of this tutorial.
@@ -151,7 +154,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % 
 % azimuthDefault = newTrial.then(-45); % signal for azimuth at start of each new trial
 % correctMove = (deltaWheel + azimuthDefault) >= 0; % signal for correctly moving stim to center
-% reward = correctMove.skipRepeats; % signal for reward only at first time of correct move
+% reward = interactiveStart.setTrigger(correctMove); % signal for reward only at first time of correct move
 % totalReward = reward.scan(@plus, 0); % signal to track total reward
 % 
 % % *Note: 'endTrial' ends the trial and 'expStop' stops the experiment, 
@@ -185,7 +188,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % audioDev = audio.Devices('default'); % assign computer's default audio device to the <audstream.Registry> object
 % onsetTone = aud.pureTone(1000, 0.25, audioDev.DefaultSampleRate, 0.1,...
 %   audioDev.NrOutputChannels); % create onset tone (see <aud.pureTone> for more info)
-% audio.default = 0.1*interactiveStart.then(onsetTone); % signal that actually plays onsetTone at start of trial interactive phase
+% audio.default = interactiveStart.then(0.1*onsetTone); % signal that actually plays onsetTone at start of trial interactive phase
 % 
 % % 5) Let's set the 'outputs' (i.e. the reward valve)
 % 
@@ -206,12 +209,8 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % % the task we'll create, until we get to the final section of this
 % % tutorial.
 % %
-% % To run this Exp Def, run 'expTestPanel' and select this file when the
-% % file explorer appears. Then in the GUI, click the 'Apply Parameters'
-% % button, followed by the 'Start Experiment' button. After the experiment
-% % starts, you will be able to "move the wheel" by moving the mouse cursor.
-% % You can scroller-click over the 'expTestPanel' figure to set/unset the
-% % mouse cursor as wheel input emulator.
+% % To run this Exp Def, follow the instructions in the 'ReadMe' file in
+% % this folder.
 
 %% Part 3: Second version of task
 % % Comment out all other sections and uncomment this section.
@@ -250,11 +249,13 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 %   interactiveStart.then(45)); % signal for default vis stim position at start of each trial: left if 'defaulSide'=1, right otherwise
 % correctMove = iff(defaultSide == 1, (deltaWheel+azimuthDefault) >= 0, ...
 %   (deltaWheel+azimuthDefault) <= 0); % signal for correct move, which depends on vis stim starting position
-% reward = correctMove.skipRepeats;
+% reward = reward = interactiveStart.setTrigger(correctMove);
 % totalReward = reward.scan(@plus, 0);
 % trialTimeout = (t - t.at(interactiveStart)) > 3; % signal indicating trial end if more than 3 seconds from start of interactive phase
+% timeoutInstant = interactiveStart.setTrigger(trialTimeout); % signal indicating the instant at which the trial timed out
 % incorrectMove = iff(defaultSide ==1, (deltaWheel+azimuthDefault) <= -55,...
 %   (deltaWheel+azimuthDefault) >= 55); % signal for incorrect move, (more than 10 visual degrees in wrong direction) 
+% incorrectInstant = interactiveStart.setTrigger(incorrectMove); % signal indicating the instant of the incorrect move
 % response = (correctMove+trialTimeout+incorrectMove) > 0; % signal that updates to '1' whenever 1 of 3 trial end possibilities occurs
 % endTrial = interactiveStart.setTrigger(response); % signal to end trial when a response occurs
 % 
@@ -284,20 +285,20 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % audioDev = audio.Devices('default');
 % onsetTone = aud.pureTone(1000, 0.25, audioDev.DefaultSampleRate, 0.1,...
 %   audioDev.NrOutputChannels);
-% audio.default = 0.1*interactiveStart.then(onsetTone);
+% audio.default = interactiveStart.then(0.1*onsetTone);
 % 
 % % The 'rewardTone' has a higher pitch than the 'onsetTone' and is shorter
 % % in duration
 % rewardTone = aud.pureTone(3000, 0.1, audioDev.DefaultSampleRate, 0.01,...
 %   audioDev.NrOutputChannels);
-% audio.default = 0.1*reward.then(rewardTone);
+% audio.default = reward.then(0.1*rewardTone);
 % 
 % % The 'incorrectTone' will be low pitch a noise burst and 2x as long in
 % % duration as 'rewardTone'
 % incorrectTone = randn(audioDev.NrOutputChannels,... 
 %   0.2 * audioDev.DefaultSampleRate); % generate noise burst via 'randn'
-% audio.default = incorrectMove.skipRepeats.then(incorrectTone);
-% audio.default = trialTimeout.skipRepeats.then(incorrectTone); % we'll use the same 'incorrectTone' for trial timeouts
+% audio.default = incorrectInstant.then(0.1*incorrectTone);
+% audio.default = timeoutInstant.then(0.1*incorrectTone); % we'll use the same 'incorrectTone' for trial timeouts
 %  
 % % 5) The 'outputs' remain the same as in the previous section
 % 
@@ -316,8 +317,8 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % events.incorrectMove = incorrectMove; % add 'incorrectMove' to 'events'
 % events.trialTimeout = trialTimeout; % add 'trialTimeout' to 'events'
 
-% % To run this version of the experiment, follow the same directions at the
-% % end of section 'Part 2' of this tutorial.
+% % To run this version of the Exp Def, follow the instructions in the 
+% % 'ReadMe' file in this folder.
 
 %% Part 4: Third version of task
 % % Comment out all other sections and uncomment this section.
@@ -354,12 +355,14 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % stimToMove = iff(defaultOriLeft <= defaultOriRight, 1, 2); % signal for which stimulus to move to center (1 for left, 2 for right)
 % correctMove = iff(stimToMove==1, (deltaWheel + azimuthDefault) >= 0,... 
 %   (deltaWheel + -azimuthDefault) <= 0); % signal for correct move, which depends on stimuli orientations
-% reward = correctMove.skipRepeats;
+% reward = interactiveStart.setTrigger(correctMove);
 % totalReward = reward.scan(@plus, 0);
 % trialTimeout = (t - t.at(interactiveStart)) > 3; 
+% timeoutInstant = interactiveStart.setTrigger(trialTimeout);
 % incorrectMove = iff(stimToMove==1,... 
 %   (deltaWheel + azimuthDefault) <= azimuthDefault - 15,...
 %   (deltaWheel + azimuthDefault) >= -azimuthDefault + 15); % signal for incorrect move, (more than 15 visual degrees in wrong direction) 
+% incorrectInstant = interactiveStart.setTrigger(incorrectMove);
 % response = (correctMove+trialTimeout+incorrectMove) > 0; 
 % endTrial = interactiveStart.setTrigger(response);
 % stop = trialNum > 10;
@@ -387,18 +390,18 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % audioDev = audio.Devices('default');
 % onsetTone = aud.pureTone(1000, 0.25, audioDev.DefaultSampleRate, 0.1,...
 %   audioDev.NrOutputChannels);
-% audio.default = 0.1*interactiveStart.then(onsetTone);
+% audio.default = interactiveStart.then(0.1*onsetTone);
 % 
 % % reward tone
 % rewardTone = aud.pureTone(3000, 0.1, audioDev.DefaultSampleRate, 0.01,...
 %   audioDev.NrOutputChannels);
-% audio.default = 0.1*reward.then(rewardTone);
+% audio.default = reward.then(0.1*rewardTone);
 % 
 % % incorrect tone
 % incorrectTone = randn(audioDev.NrOutputChannels,... 
 %   0.2 * audioDev.DefaultSampleRate); 
-% audio.default = incorrectMove.skipRepeats.then(incorrectTone);
-% audio.default = trialTimeout.skipRepeats.then(incorrectTone); 
+% audio.default = incorrectInstant.then(0.1*incorrectTone);
+% audio.default = timeoutInstant.then(0.1*incorrectTone);
 % 
 % % 5) The 'outputs' remain the same as in the previous section
 % 
@@ -419,8 +422,8 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % events.incorrectMove = incorrectMove;
 % events.trialTimeout = trialTimeout; 
 
-% % To run this version of the experiment, follow the same directions at the
-% % end of section 'Part 2' of this tutorial.
+% % To run this version of the Exp Def, follow the instructions in the 
+% % 'ReadMe' file in this folder.
 
 %% Part 5: Fourth version of task and using parameters
 % Comment out all other sections besides 'Part 4', and uncomment this 
@@ -432,14 +435,16 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % determining which stimulus is paired with reward. We will use 'params' to 
 % manipulate these properties of the visual stimuli in real-time.
 
-% 0) Let's now add parameters to our Exp Def. The input argument, 'params',
-% is a Struct containing signals as its fields, similar to 'events'. These 
-% signals are the parameters the experimenter defines in their Exp Def. The 
-% parameters will appear as editable fields in the *Signals* experiment GUI
-% (either the "MC Panel" or the "ExpTestPanel", depending on which one the 
-% experimenter is using). The experimenter can click on any parameter in 
-% the GUI during experiment runtime, change that parameter's value, and 
-% the new value will be assigned to that parameter on the next trial. 
+% The following notes are important to consider when adding 'params', to
+% an Exp Def:
+%
+% The signals contained in 'params' are the parameters the experimenter 
+% defines in their Exp Def. These parameters will appear as editable fields 
+% in the *Signals* experiment GUI (either the "MC Panel" or the 
+% "ExpTestPanel", depending on which one the experimenter is using). The 
+% experimenter can click on any parameter in the GUI during experiment 
+% runtime, change that parameter's value, and the new value will be 
+% assigned to that parameter on the next trial. 
 %
 % Each parameter can either be global or conditional: Global parameters are 
 % used in every trial of the experiment; conditional parameters are used
@@ -451,38 +456,19 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % we'll define the grating orientation as a global parameter, and the 
 % grating contrast as a conditional parameter.
 %
-% A last note about parameters concerns repeating incorrect trials. In the 
-% "Conditional" panel in the GUI, one column will be labeled "Repeat 
-% incorrect", and will contain checkboxes next to each set of conditional
-% parameters that have been defined in the Exp Def. If this checkbox is
-% checked when a trial that matches those conditional parameters occurs and
-% does not result in a reward, this trial with the same conditional
-% parameters is automatically repeated. (*Signals* checks to see whether a 
-% trial was correct or not by evaluating the value of 'events.endTrial' at 
-% trial end: if the value of this signal is truthy, the trial is deemed to 
-% have been correct; if not, the trial is deemed to have been incorrect. In
-% the previous sections, 'events.endTrial' always updated to a truthy value 
-% because we had not used any parameters, but if the experimenter wishes 
-% to have a subject repeat incorrect trials, the experimenter must make 
-% sure to update 'events.endTrial' appropriately).
-
-try
-% Vis Stim Orientation as global parameters assigned to 'params'
-params.LeftVisStimOrientation = 30; % signal that sets the left grating orientation to 30 degrees
-params.RightVisStimOrientation = 60; % signal that sets the right grating orientation to 60 degrees
-
-% Vis Stim Contrast as conditional parameters assigned to 'params': 
-% Conditional parameters are defined in Exp Defs as having number of 
-% columns > 1, where each column is a condition. All conditional parameters 
-% must have the same number of columns. (In future, there will be better 
-% support for specifying conditional parameters in Exp Defs).
-params.LeftVisStimContrast = [1 0.75 0.5 0.25 0.125 0]; % signal as a vector of possible values for left grating contrast
-params.RightVisStimContrast = [1 0.75 0.5 0.25 0.125 0]; % signal as a vector of possible values for right grating contrast
-catch ex
-  disp(getReport(ex, 'extended', 'hyperlinks', 'on'))
-end
+% Somewhat unintuitively, we must assign 'params' to variables before
+% posting values to 'params'. E.g:
+%
+% 'x = params.x; params.x = 1;' instead of: 'params.x = 1; x = params.x'
+%
+% This is because if we do the latter, 'x' will hold an empty value 
+% (instead of 1) because it is a dependent signal (on 'params.x'), and all 
+% dependent signals initialize with empty values - they only update after
+% the signal they depend on updates. (See Section 'Part 2' in
+% <Getting_Started_With_Signals> if this is unclear).
 
 % 1) The inputs will be the same as in the previous section
+
 newTrial = events.newTrial;
 trialNum = events.trialNum;
 interactiveStart = newTrial.delay(1); 
@@ -492,9 +478,10 @@ deltaWheel = 1/3 * (wheel - wheel0);
 
 % 2) Let's repeat some of our experiment and trial framework from the
 % previous section, but now define trials in which only the grating with
-% higher contrast will be paired with reward, and that stimulus must be
+% higher contrast will be paired with reward (or the left grating if the 
+% contrast for both visual stimuli are equal), and that stimulus must be
 % moved to center. We'll pluck the orientation and contrast for the stimuli
-% from the parameters we defined above.
+% from the parameters we define at the end of this Exp Def. 
 
 defaultOriLeft = params.LeftVisStimOrientation;
 defaultOriRight = params.RightVisStimOrientation;
@@ -502,15 +489,17 @@ defaultContrastLeft = params.LeftVisStimContrast;
 defaultContrastRight = params.RightVisStimContrast;
 
 azimuthDefault = newTrial.then(-30);
-stimToMove = iff(defaultContrastLeft <= defaultContrastRight, 1, 2);
+stimToMove = iff(defaultContrastLeft >= defaultContrastRight, 1, 2);
 correctMove = iff(stimToMove==1, (deltaWheel + azimuthDefault) >= 0,... 
   (deltaWheel + -azimuthDefault) <= 0);
-reward = correctMove.skipRepeats;
+reward = interactiveStart.setTrigger(correctMove);
 totalReward = reward.scan(@plus, 0);
-trialTimeout = (t - t.at(interactiveStart)) > 3; 
+trialTimeout = (t - t.at(interactiveStart)) > 3;
+timeoutInstant = interactiveStart.setTrigger(trialTimeout);
 incorrectMove = iff(stimToMove==1,... 
-  (deltaWheel + azimuthDefault) <= azimuthDefault - 15,...
-  (deltaWheel + azimuthDefault) >= -azimuthDefault + 15); 
+  (deltaWheel + azimuthDefault) <= (azimuthDefault - 15),...
+  (deltaWheel + -azimuthDefault) >= (-azimuthDefault + 15)); 
+incorrectInstant = interactiveStart.setTrigger(incorrectMove);
 response = (correctMove+trialTimeout+incorrectMove) > 0; 
 endTrial = interactiveStart.setTrigger(response);
 stop = trialNum > 10;
@@ -522,13 +511,13 @@ expStop = stop.then(1);
 leftVisStim = vis.grating(t);
 leftVisStim.azimuth = deltaWheel + azimuthDefault;
 leftVisStim.orientation = defaultOriLeft; % our signal with the randomly chosen orientation for the left stimulus
-leftVisStim.contrast = defaultContrastLeft;
+leftVisStim.contrast = defaultContrastLeft(1); % for vector assigments to signal visual stimuli elements, we must index with '(1)'
 leftVisStim.show = interactiveStart.to(endTrial);
 
 rightVisStim = vis.grating(t);
 rightVisStim.azimuth = deltaWheel + -azimuthDefault;
 rightVisStim.orientation = defaultOriRight; % our signal with the randomly chosen orientation for the right stimulus
-rightVisStim.contrast = defaultContrastRight;
+rightVisStim.contrast = defaultContrastRight(1); % for vector assigments to signal visual stimuli elements, we must index with '(1)'
 rightVisStim.show = interactiveStart.to(endTrial);
 
 visStim.left = leftVisStim; visStim.right = rightVisStim;
@@ -539,18 +528,18 @@ visStim.left = leftVisStim; visStim.right = rightVisStim;
 audioDev = audio.Devices('default');
 onsetTone = aud.pureTone(1000, 0.25, audioDev.DefaultSampleRate, 0.1,...
   audioDev.NrOutputChannels);
-audio.default = 0.1*interactiveStart.then(onsetTone);
+audio.default = interactiveStart.then(0.1*onsetTone);
 
 % reward tone
 rewardTone = aud.pureTone(3000, 0.1, audioDev.DefaultSampleRate, 0.01,...
   audioDev.NrOutputChannels);
-audio.default = 0.1*reward.then(rewardTone);
+audio.default = reward.then(0.1*rewardTone);
 
 % incorrect tone
 incorrectTone = randn(audioDev.NrOutputChannels,... 
   0.2 * audioDev.DefaultSampleRate); 
-audio.default = incorrectMove.skipRepeats.then(incorrectTone);
-audio.default = trialTimeout.skipRepeats.then(incorrectTone); 
+audio.default = incorrectInstant.then(0.1*incorrectTone);
+audio.default = timeoutInstant.then(0.1*incorrectTone);
 
 % 5) The 'outputs' remain the same as in the previous section
 
@@ -571,26 +560,48 @@ events.correctMove = correctMove;
 events.reward = reward;
 events.totalReward = totalReward;
 events.incorrectMove = incorrectMove;
+events.incorrectInstant = incorrectInstant;
 events.trialTimeout = trialTimeout; 
+events.timeoutInstant = timeoutInstant;
 
-% To run this version of the experiment, follow the same directions at the
-% end of section 'Part 2' of this tutorial. Additionally, while the
-% experiment is running, try editing the parameter values for both grating
-% orientation (in the "Global" panel) and grating contrast (in the 
-% "Conditional" panel) by clicking on them directly in the GUI. Feel free 
-% to add additional parameters to this Exp Def after you are comfortable - 
-% check the stimulus parameters in <vis.grating> to see all the visual 
-% stimuli properties you could add/edit as *Signals* parameters.
+% 7) Let's now add parameters to our Exp Def. Parameters are typically
+% written at the end of an Exp Def in a 'try...catch...end' statement to
+% allow for exception handling
+
+try
+  % Vis Stim Orientation as global parameters assigned to 'params'
+  params.LeftVisStimOrientation = 30; % signal that sets the left grating orientation to 30 degrees
+  params.RightVisStimOrientation = 60; % signal that sets the right grating orientation to 60 degrees
+  
+  % Vis Stim Contrast as conditional parameters assigned to 'params':
+  % Conditional parameters are defined in Exp Defs as having number of
+  % columns > 1, where each column is a condition. All conditional parameters
+  % must have the same number of columns.
+  params.LeftVisStimContrast = [1 0.75 0.5 0.25 0]; % signal as a vector of possible values for left grating contrast
+  params.RightVisStimContrast = [0 0.25 0.5 0.75 1]; % signal as a vector of possible values for right grating contrast
+catch ex
+  disp(getReport(ex, 'extended', 'hyperlinks', 'on'))
+end
+
+% To run this version of the experiment, follow the instructions in the
+% 'ReadMe' file in this folder. Additionally, while the experiment is 
+% running, try editing the parameter values for both grating orientation 
+% (in the "Global" panel) and grating contrast (in the "Conditional" panel) 
+% by clicking on them directly in the GUI. Feel free to add additional 
+% parameters to this Exp Def after you are comfortable - check the stimulus 
+% parameters in <vis.grating> to see all the visual stimuli properties you 
+% could add/edit as *Signals* parameters.
 
 %% Congratulations!
 
-% You have made it to the end of this tutorial! Hopefully this tutorial has
+% You have made it to the end of this tutorial! Hopefully this exercise has
 % provided you with a foundation for creating and running your own
 % *Signals* Experiments. There is a learning curve to using *Signals*, but
 % the vast scope and flexibility in experimental design that *Signals* 
-% allows for is well worth the cost. Please feel free to contact the author
-% with any questions regarding this tutorial, or *Signals* in general!
-% is worth  
+% allows for is well worth the cost (and keep in mind that less than half
+% of the all signals-specific functions defined in <sig.Signal> were used
+% in this tutorial). Please feel free to contact the author with any
+% questions regarding this tutorial, or *Signals* in general! 
 
 end
 

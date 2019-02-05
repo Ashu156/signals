@@ -1,8 +1,3 @@
-%% Todo:
-% 1) Signal creation both from methods and functions
-% 2) "Instantaneous" signals
-% 3) Common errors using signals
-
 %% Notes:
 % Author: Jai Bhagat - j.bhagat@ucl.ac.uk (w/inspiration from Miles Wells
 % and Andy Peters)
@@ -97,12 +92,23 @@ os3.post([1 2 3; 4 5 6; 7 8 9]); % first value displayed is 'os3', second is 'ds
 % Re-post "Hello, *signals*" to os4, and make sure the output of 'dsStr' is
 % displayed. --
 
-% Now let's use some common signal-specific methods to create new signals:
+% Now let's use some common signal-specific functions to create new signals:
 % Let's first clear all our old output signals for clarity's sake, so the
 % only display in the command line will be from the new dependent signals
 % we will create
 clear dsPlusOut dsMultOut dsNotOut dsAndOut dsGEOut os1Out os2Out os3Out
 
+% *Note: In the below examples, the signals-specific functions get used 
+% exclusively as signals-object method calls 
+% (i.e. 'newSignal = s1.method(s2)'). However, these functions can also be 
+% used analagously in a classic functional fashion 
+% (i.e. 'newSignal = method(s1,s2)'). Most signals-specific functions were
+% written to make use of the former approach because it can be helpful and 
+% intuitive to think of these functions as method calls on one signal, with
+% other signals as input arguments for the specific method which is called.
+% This is why we'll use this approach here, but feel free to use whichever 
+% syntax you are most comfortable with.
+ 
 % 'at': 'ds = s1.at(s2)' returns a dependent signal 'ds' which takes the
 % current value of 's1' whenever 's2' takes any "truthy" value
 % (that is, a value not false or zero).
@@ -113,13 +119,13 @@ os2.post(2); % '1' will be displayed
 os2.post(false); % nothing will be displayed (but value of 'ds1' remains 1)
 clear ds1At2Out
 
-% 'to': 'ds = to(s1,s2)' returns a dependent signal 'ds' which can only
+% 'to': 'ds = s1.to(s2)' returns a dependent signal 'ds' which can only
 % ever take a value of 1 or 0. 'ds' initially takes a value of 1 when 's1'
 % takes a truthy value. 'ds' then alternates between updating to '0'
 % the first time 's2' updates to a truthy value after 's1' has updated
 % to a truthy value, and updating to '1' the first time 's1' updates
 % to a truthy value after 's2' has updated to a truthy value.
-dsTo = to(os1, os2); dsToOut = dsTo.output;
+dsTo = os1.to(os2); dsToOut = dsTo.output;
 os1.post(1); % '1' will be displayed
 os1.post(2); % nothing will be displayed
 os2.post(1); % '0' will be displayed

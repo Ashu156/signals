@@ -7,7 +7,7 @@ function expTestPanel(expdef)
 % - save 'block' file
 % - delete 'Wheel Position' slider and improve behavior of unsetting cursor as wheel
 % - PTB 'Screen' stuff: vc, vcc? & VBL syncing and DWM compositor issues? & get screen resolution right for PTB 'Screen'
-
+% - add support for multiple screens
 %% Panel UI set-up
 % initialize global/persistent variables and graphics
 addSignalsJava(); % adds necessary Java files (classes)
